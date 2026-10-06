@@ -73,6 +73,35 @@ header {
   margin-left: -9px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Kleine knop: geluid aan of uit, zichtbaar in de header. */
+.sound-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: white;
+  color: var(--green);
+  font-size: 12px;
+}
+
+.sound-toggle:hover {
+  background: #edf2e5;
+}
+
+.sound-toggle[aria-pressed="false"] {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
 .demo-label {
   border-radius: 6px;
   padding: 6px 10px;
@@ -197,6 +226,132 @@ h2 {
   font-size: 14px;
 }
 
+/* Illustratieve kaart. data-status volgt de status in app.js. */
+.request-map {
+  margin: 20px 0 0;
+}
+
+.request-map svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  background: #eef2e8;
+}
+
+.request-map figcaption {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.map-blocks rect {
+  fill: white;
+}
+
+.map-park {
+  fill: #dbe6cc;
+}
+
+.map-links line {
+  stroke: var(--green);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 4 6;
+  opacity: 0;
+  transition: opacity 0.4s, stroke 0.4s;
+}
+
+.map-helpers circle {
+  fill: #c3cdb8;
+  stroke: white;
+  stroke-width: 3;
+  transition: fill 0.4s;
+}
+
+.map-pulses circle {
+  fill: #8aab54;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.map-you {
+  fill: var(--green);
+  stroke: white;
+  stroke-width: 4;
+  transition: fill 0.4s;
+}
+
+/* Verzonden: signaal pulseert en lijnen lopen naar de helpers. */
+[data-status="sent"] .map-pulses circle {
+  animation: map-pulse 1.6s ease-out infinite;
+}
+
+[data-status="sent"] .map-pulses circle + circle {
+  animation-delay: 0.8s;
+}
+
+[data-status="sent"] .map-links line {
+  opacity: 0.6;
+  animation: map-flow 0.8s linear infinite;
+}
+
+/* Ontvangst (demo): helpers lichten op, lijnen worden doorgetrokken. */
+[data-status="received"] .map-links line {
+  opacity: 1;
+  stroke: #769a40;
+  stroke-dasharray: none;
+}
+
+[data-status="received"] .map-helpers circle {
+  fill: #769a40;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: map-pop 0.4s ease-out;
+}
+
+[data-status="cancelled"] .map-you {
+  fill: #9aa596;
+}
+
+@keyframes map-pulse {
+  from {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(6);
+  }
+}
+
+@keyframes map-flow {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+@keyframes map-pop {
+  50% {
+    transform: scale(1.4);
+  }
+}
+
+/* Minder beweging: de kaart toont de status zonder animatie. */
+@media (prefers-reduced-motion: reduce) {
+  .request-map * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  [data-status="sent"] .map-pulses circle:first-child {
+    opacity: 0.3;
+    transform: scale(2.5);
+  }
+}
+
 .help-card .demo-note {
   margin: 20px 0 0;
   padding-top: 18px;
@@ -228,7 +383,8 @@ h2 {
     display: none;
   }
 
-  .demo-label {
+  .demo-label,
+  .sound-toggle {
     font-size: 11px;
   }
 

@@ -19,7 +19,19 @@
         <b aria-hidden="true">↗</b>
         linked<span>.</span>
       </span>
-      <span class="demo-label">Demo</span>
+      <div class="header-actions">
+        <!-- Geluid staat standaard aan; deze knop zet het uit of aan. -->
+        <button
+          id="sound-toggle"
+          class="sound-toggle"
+          type="button"
+          aria-pressed="true"
+        >
+          <span aria-hidden="true">♪</span>
+          <span id="sound-toggle-label">Sound on</span>
+        </button>
+        <span class="demo-label">Demo</span>
+      </div>
     </header>
 
     <main>
@@ -63,6 +75,53 @@
             You haven’t asked for help yet.
           </p>
         </div>
+
+        <!-- Illustratieve kaart: geen echte locatie, geen kaarttegels
+             van internet. CSS animeert de kaart via data-status. -->
+        <figure
+          id="request-map"
+          class="request-map"
+          data-status="idle"
+        >
+          <svg
+            viewBox="0 0 320 180"
+            role="img"
+            aria-labelledby="map-caption"
+          >
+            <g class="map-blocks">
+              <rect x="12" y="12" width="70" height="48" rx="6" />
+              <rect x="96" y="12" width="88" height="48" rx="6" />
+              <rect x="198" y="12" width="110" height="30" rx="6" />
+              <rect x="12" y="74" width="70" height="94" rx="6" />
+              <rect x="198" y="56" width="50" height="56" rx="6" />
+              <rect x="262" y="56" width="46" height="112" rx="6" />
+              <rect x="96" y="120" width="152" height="48" rx="6" />
+            </g>
+            <path
+              class="map-park"
+              d="M100 74 h40 a8 8 0 0 1 8 8 v24 a8 8 0 0 1 -8 8 h-40
+                 a4 4 0 0 1 -4 -4 v-32 a4 4 0 0 1 4 -4 z"
+            />
+            <g class="map-links">
+              <line x1="172" y1="90" x2="47" y2="36" />
+              <line x1="172" y1="90" x2="285" y2="28" />
+              <line x1="172" y1="90" x2="223" y2="145" />
+            </g>
+            <g class="map-helpers">
+              <circle cx="47" cy="36" r="7" />
+              <circle cx="285" cy="28" r="7" />
+              <circle cx="223" cy="145" r="7" />
+            </g>
+            <g class="map-pulses">
+              <circle cx="172" cy="90" r="10" />
+              <circle cx="172" cy="90" r="10" />
+            </g>
+            <circle class="map-you" cx="172" cy="90" r="9" />
+          </svg>
+          <figcaption id="map-caption">
+            Illustration only. Not your real location.
+          </figcaption>
+        </figure>
 
         <!-- Deze uitleg blijft zichtbaar in iedere status. -->
         <p class="demo-note">

@@ -32,6 +32,16 @@ het lokale verzoek en de wachtende ontvangstsimulatie. Deze demo verwerkt
 geen locatie of persoonsgegevens en bewaart geen verzoeken. Vernieuwen
 of sluiten eindigt de lokale demo; andere tabbladen zijn aparte sessies.
 
+## Kaart en geluid (branch `feature/map-and-sound`)
+
+- Een illustratieve kaart toont de status: rustig, pulserend signaal
+  bij **sent** en oplichtende helpers bij **received**. Het is een
+  inline SVG: geen echte locatie, geen kaarttegels van internet.
+- Knoppen en statuswissels spelen korte tonen via de Web Audio API.
+  Er zijn geen audiobestanden. **Sound on/off** in de header zet het
+  geluid uit; die keuze wordt niet opgeslagen.
+- Met "minder beweging" in het besturingssysteem staat de kaart stil.
+
 ## Geautomatiseerde controle
 
 Met Node.js geïnstalleerd:
