@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="nl">
+<html lang="en">
   <head>
     <!-- De drie bestaande bestanden blijven de structuur van het project. -->
     <meta charset="UTF-8" />
@@ -8,7 +8,7 @@
       content="width=device-width, initial-scale=1.0"
     />
     <meta name="theme-color" content="#183e37" />
-    <title>Linked — Hulp aanvragen · demo</title>
+    <title>Linked | Ask for help</title>
     <link rel="stylesheet" href="styles.css" />
     <!-- defer laat app.js pas starten nadat de HTML beschikbaar is. -->
     <script src="app.js" defer></script>
@@ -19,96 +19,65 @@
         <b aria-hidden="true">↗</b>
         linked<span>.</span>
       </span>
-      <span class="demo-label">Schoolprototype · demo</span>
+      <span class="demo-label">Demo</span>
     </header>
 
     <main>
       <section class="intro" aria-labelledby="page-title">
-        <span class="eyebrow">EEN EERSTE STAP NAAR HULP</span>
-        <h1 id="page-title">Een beetje dichter bij <em>hulp.</em></h1>
-        <p>Test hoe je een hulpverzoek start, bekijkt en annuleert.</p>
+        <span class="eyebrow">A FIRST STEP TOWARDS HELP</span>
+        <h1 id="page-title">A little closer to <em>help.</em></h1>
+        <p>When something feels wrong, you can ask for help.</p>
       </section>
 
-      <div class="grid">
-        <section class="help-card" aria-labelledby="request-title">
-          <div class="card-top">
-            <span class="eyebrow">JOUW HULPVERZOEK</span>
-            <span class="tag">Demo</span>
-          </div>
-          <h2 id="request-title">Hulp nodig?</h2>
-          <p>Klik op de knop om één demo-hulpverzoek te starten.</p>
+      <section class="help-card" aria-labelledby="request-title">
+        <div class="card-top">
+          <span class="eyebrow">YOUR HELP REQUEST</span>
+        </div>
+        <h2 id="request-title">Need help?</h2>
+        <p>You can reach out, even if you’re not sure.</p>
 
-          <!-- Vaste knoppen: JavaScript wisselt hun zichtbaarheid en tekst. -->
-          <button id="request-button" class="primary" type="button">
-            <span id="request-button-label">Hulp aanvragen</span>
-            <span aria-hidden="true">↗</span>
-          </button>
-          <button
-            id="cancel-button"
-            class="secondary"
-            type="button"
-            hidden
-          >
-            Verzoek annuleren
-          </button>
+        <!-- Vaste knoppen: JavaScript wisselt hun zichtbaarheid en tekst. -->
+        <button id="request-button" class="primary" type="button">
+          <span id="request-button-label">Ask for help</span>
+          <span aria-hidden="true">↗</span>
+        </button>
+        <button
+          id="cancel-button"
+          class="secondary"
+          type="button"
+          hidden
+        >
+          Cancel request
+        </button>
 
-          <!-- Statusupdates worden ook door schermlezers aangekondigd. -->
-          <div
-            id="request-status"
-            class="status-banner"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            <strong id="status-title">Nog geen actief verzoek</strong>
-            <p id="status-description">
-              Je kunt een demo-hulpverzoek starten.
-            </p>
-          </div>
-
-          <!-- Deze uitleg blijft zichtbaar in iedere status. -->
-          <p class="demo-note">
-            Alleen een demo. Verzending en ontvangst worden lokaal
-            gesimuleerd. Er is geen hulpverlener verbonden en er komt
-            geen echte hulp. Bij een noodsituatie: <a href="tel:112">112</a>.
+        <!-- Statusupdates worden ook door schermlezers aangekondigd. -->
+        <div
+          id="request-status"
+          class="status-banner"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <strong id="status-title">No active request</strong>
+          <p id="status-description">
+            You haven’t asked for help yet.
           </p>
-          <noscript>
-            <p class="script-warning">
-              Zet JavaScript aan om de demo-hulpknop te gebruiken.
-              Zonder JavaScript wordt geen verzoek gestart.
-            </p>
-          </noscript>
-        </section>
+        </div>
 
-        <aside class="explanation" aria-labelledby="demo-title">
-          <span class="eyebrow">DIT TEST JE IN DE DEMO</span>
-          <h2 id="demo-title">Eén verzoek. Duidelijke stappen.</h2>
-          <ol class="steps">
-            <li>
-              <h3>Vraag hulp aan</h3>
-              <p>De knop start één lokaal verzoek.</p>
-            </li>
-            <li>
-              <h3>Bekijk de status</h3>
-              <p>
-                Eerst zie je ‘Verzonden — demo’. Na ongeveer 1,5 seconde
-                volgt ‘Ontvangst gesimuleerd — demo’. Dat is geen
-                bevestiging van een echte hulpverlener.
-              </p>
-            </li>
-            <li>
-              <h3>Annuleer wanneer je wilt</h3>
-              <p>Je ziet een bevestiging en kunt opnieuw beginnen.</p>
-            </li>
-          </ol>
-          <p class="session-note">
-            Deze demo bewaart geen verzoeken of locatie. Als je de pagina
-            vernieuwt of sluit, eindigt de lokale demo.
+        <!-- Deze uitleg blijft zichtbaar in iedere status. -->
+        <p class="demo-note">
+          Demo only. No real request is sent and no help is on the way.
+          In an emergency, call <a href="tel:112">112</a>.
+        </p>
+        <noscript>
+          <p class="script-warning">
+            Enable JavaScript to use the help button.
+            Without JavaScript, no request will be started.
           </p>
-        </aside>
-      </div>
+        </noscript>
+      </section>
+
     </main>
 
-    <footer>Linked · Eerste prototype · Vier user stories</footer>
   </body>
 </html>

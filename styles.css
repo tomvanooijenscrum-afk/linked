@@ -2,7 +2,6 @@
 :root {
   --green: #183e37;
   --muted: #586354;
-  --lime: #dfefad;
   --paper: #f8f9f5;
   --border: #e1e5da;
 }
@@ -74,8 +73,7 @@ header {
   margin-left: -9px;
 }
 
-.demo-label,
-.tag {
+.demo-label {
   border-radius: 6px;
   padding: 6px 10px;
   font-size: 12px;
@@ -85,12 +83,8 @@ header {
   border: 1px solid var(--border);
 }
 
-.tag {
-  background: var(--lime);
-}
-
 main {
-  max-width: 1120px;
+  max-width: 760px;
   margin: auto;
   padding: 40px 32px;
 }
@@ -125,22 +119,11 @@ p {
   line-height: 1.65;
 }
 
-/* Desktop: hulpkaart naast uitleg. Mobiel: hulpkaart als eerste. */
-.grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  align-items: start;
-  gap: 24px;
-}
-
-.help-card,
-.explanation {
+/* Eén hulpkaart houdt de aanvraag en status bij elkaar. */
+.help-card {
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 28px;
-}
-
-.help-card {
   background: white;
 }
 
@@ -225,53 +208,6 @@ h2 {
   color: var(--green);
 }
 
-.explanation {
-  background: #edf2e5;
-}
-
-.explanation h2 {
-  font-size: 23px;
-}
-
-.steps {
-  margin: 24px 0;
-  padding-left: 22px;
-}
-
-.steps li {
-  padding-left: 8px;
-  margin-bottom: 20px;
-}
-
-.steps li::marker {
-  font-weight: 700;
-}
-
-.steps h3 {
-  margin: 0 0 6px;
-  font-size: 16px;
-}
-
-.steps p,
-.session-note {
-  margin: 0;
-  font-size: 14px;
-}
-
-.session-note {
-  border-top: 1px solid #d3ddc6;
-  padding-top: 18px;
-}
-
-footer {
-  max-width: 1056px;
-  margin: 0 auto;
-  border-top: 1px solid var(--border);
-  padding: 24px 0;
-  color: var(--muted);
-  font-size: 12px;
-}
-
 /* hidden moet ook werken voor de knop met display:flex. */
 [hidden] {
   display: none !important;
@@ -313,17 +249,8 @@ footer {
     margin-bottom: 0;
   }
 
-  .grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 20px;
-  }
-
-  .help-card,
-  .explanation {
+  .help-card {
     padding: 22px;
   }
 
-  footer {
-    margin: 0 20px;
-  }
 }

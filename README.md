@@ -4,6 +4,9 @@ Deze fase richt zich op vier user stories: openen, hulp aanvragen,
 status bekijken en annuleren. Het conceptdocument van 30 september 2026
 beschrijft de richting voor later, niet de scope van dit prototype.
 
+Het product is Engelstalig. Codecommentaren en teamdocumentatie blijven
+Nederlandstalig; de onderstaande knop- en statusnamen volgen de Engelse UI.
+
 ## Starten
 
 Open `index.html` in een browser. Er is geen installatie, build of server
@@ -13,11 +16,11 @@ beschikbaar maken.
 
 ## De flow testen
 
-1. Open de pagina: **Hulp aanvragen** is direct beschikbaar.
-2. Klik: **Verzonden — demo** verschijnt en annuleren wordt beschikbaar.
-3. Wacht ongeveer 1,5 seconde: **Ontvangst gesimuleerd — demo** verschijnt.
-4. Klik op **Verzoek annuleren**: de annulering wordt bevestigd.
-5. Klik op **Opnieuw hulp aanvragen**: een nieuw verzoek begint.
+1. Open de pagina: **Ask for help** is direct beschikbaar.
+2. Klik: **Request sent (demo)** verschijnt en annuleren wordt beschikbaar.
+3. Wacht ongeveer 1,5 seconde: **Receipt simulated (demo)** verschijnt.
+4. Klik op **Cancel request**: de annulering wordt bevestigd.
+5. Klik op **Ask for help again**: een nieuw verzoek begint.
 6. Herhaal, maar annuleer vóór de ontvangstsimulatie. Wacht daarna:
    de status blijft geannuleerd.
 7. Klik snel meerdere keren: er ontstaat maximaal één actief verzoek.

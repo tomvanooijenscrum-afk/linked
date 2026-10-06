@@ -79,12 +79,12 @@ function setup() {
 
 // Stories 1 en 2: openen, aanvragen en herhaald klikken.
 const app = setup();
-assert.equal(app.title(), "Nog geen actief verzoek");
+assert.equal(app.title(), "No active request");
 assert.equal(app.elements.get("#request-button").hidden, false);
 assert.equal(app.elements.get("#cancel-button").hidden, true);
 assert.equal(app.timers.size, 0);
 app.click("#request-button");
-assert.equal(app.title(), "Verzonden — demo");
+assert.equal(app.title(), "Request sent (demo)");
 assert.equal(app.elements.get("#request-button").disabled, true);
 assert.equal(app.elements.get("#cancel-button").hidden, false);
 assert.equal(app.elements.get("#cancel-button").focused, true);
@@ -95,10 +95,10 @@ assert.equal(app.timers.size, 1, "Slechts één actief verzoek/timer");
 
 // Story 3: verzonden is nog geen ontvangst. Ontvangst is expliciet demo.
 app.runReceipt();
-assert.equal(app.title(), "Ontvangst gesimuleerd — demo");
+assert.equal(app.title(), "Receipt simulated (demo)");
 assert.ok(
   app.elements.get("#status-description").textContent.includes(
-    "Geen echte hulpverlener",
+    "No real responder",
   ),
 );
 app.click("#request-button");
@@ -106,16 +106,16 @@ assert.equal(app.timers.size, 0, "Ontvangen verzoek blijft actief");
 
 // Story 4: annuleren na ontvangst en opnieuw aanvragen.
 app.click("#cancel-button");
-assert.equal(app.title(), "Verzoek geannuleerd");
+assert.equal(app.title(), "Request cancelled");
 assert.equal(app.elements.get("#request-button").hidden, false);
 assert.equal(app.elements.get("#request-button").disabled, false);
 assert.equal(app.elements.get("#request-button").focused, true);
 assert.equal(
   app.elements.get("#request-button-label").textContent,
-  "Opnieuw hulp aanvragen",
+  "Ask for help again",
 );
 app.click("#request-button");
-assert.equal(app.title(), "Verzonden — demo");
+assert.equal(app.title(), "Request sent (demo)");
 assert.equal(app.timers.size, 1);
 
 // Annuleer ook vóór ontvangst. Zelfs een oude callback mag niet herleven.
@@ -123,17 +123,17 @@ const oldReceipt = app.timers.values().next().value;
 app.click("#cancel-button");
 assert.equal(app.timers.size, 0);
 oldReceipt();
-assert.equal(app.title(), "Verzoek geannuleerd");
+assert.equal(app.title(), "Request cancelled");
 app.click("#cancel-button");
-assert.equal(app.title(), "Verzoek geannuleerd");
+assert.equal(app.title(), "Request cancelled");
 app.click("#request-button");
 oldReceipt();
-assert.equal(app.title(), "Verzonden — demo");
+assert.equal(app.title(), "Request sent (demo)");
 app.runReceipt();
-assert.equal(app.title(), "Ontvangst gesimuleerd — demo");
+assert.equal(app.title(), "Receipt simulated (demo)");
 
 // Vernieuwen begint een nieuwe lokale sessie, zonder opgeslagen verzoek.
-assert.equal(setup().title(), "Nog geen actief verzoek");
+assert.equal(setup().title(), "No active request");
 console.log(
   "Geslaagd: openen, aanvragen, dubbele klikken, demo-ontvangst, " +
     "annuleren vóór/na ontvangst, opnieuw aanvragen en oude callbacks.",

@@ -74,6 +74,18 @@ user stories en testresultaten.
 
 ## Grenzen van de simulatie
 
+Op verzoek van het team is de volledige productinterface Engelstalig,
+inclusief knoppen, statusmeldingen, demo-uitleg en de HTML-taal (`en`).
+De Nederlandse codecommentaren en projectdocumentatie blijven behouden.
+Codex heeft deze vertaling uitgevoerd en de bestaande flowtests bijgewerkt;
+de scope en werking van de flow zijn gelijk gebleven.
+
+Daarna vroeg het team om alleen de productinterface te tonen. De demo-
+rondleiding, sessie-uitleg en schoolprojectfooter zijn verwijderd. De pagina
+toont nu één hulpkaart. De teksten zijn korter en bevatten geen lange
+gedachtestreepjes. Alleen de noodzakelijke demo-aanduiding blijft staan,
+zodat de ontvangstsimulatie geen echte hulpverlening suggereert.
+
 `sent` betekent dat het verzoek lokaal in de demo is gestart; er is geen
 netwerkverzending. `received` betekent alleen dat de demo-timer is afgelopen,
 niet dat een hulpverlener het heeft ontvangen. Beide worden zichtbaar als

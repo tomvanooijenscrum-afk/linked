@@ -19,27 +19,23 @@ const receiptDelay = 1500;
 // Teksten onderscheiden verzenden van ontvangen en noemen steeds de demo.
 const statusMessages = {
   idle: {
-    title: "Nog geen actief verzoek",
-    description: "Je kunt een demo-hulpverzoek starten.",
+    title: "No active request",
+    description: "You haven’t asked for help yet.",
   },
   sent: {
-    title: "Verzonden — demo",
+    title: "Request sent (demo)",
     description:
-      "Je verzoek is lokaal gestart. Ontvangst is nog niet bevestigd. " +
-      "De demo simuleert zo een ontvangstbevestiging.",
+      "Waiting for a simulated receipt confirmation.",
   },
   received: {
-    title: "Ontvangst gesimuleerd — demo",
+    title: "Receipt simulated (demo)",
     description:
-      "De lokale demo heeft ontvangst gesimuleerd. " +
-      "Geen echte hulpverlener heeft dit verzoek ontvangen. " +
-      "Er is geen hulp onderweg.",
+      "No real responder has received this request.",
   },
   cancelled: {
-    title: "Verzoek geannuleerd",
+    title: "Request cancelled",
     description:
-      "Je demo-hulpverzoek is gestopt. " +
-      "Je kunt opnieuw een verzoek starten.",
+      "Your request has stopped. You can ask for help again.",
   },
 };
 
@@ -107,8 +103,8 @@ function render() {
   cancelButton.hidden = !active;
   cancelButton.disabled = !active;
   requestButtonLabel.textContent = requestStatus === "cancelled"
-    ? "Opnieuw hulp aanvragen"
-    : "Hulp aanvragen";
+    ? "Ask for help again"
+    : "Ask for help";
 }
 
 // Koppel de vaste HTML-knoppen één keer aan hun functies en teken de start.
