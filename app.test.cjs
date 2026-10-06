@@ -16,6 +16,9 @@ function setup() {
     "#cancel-button",
     "#status-title",
     "#status-description",
+    "#request-map",
+    "#sound-toggle",
+    "#sound-toggle-label",
   ];
   const elements = new Map();
   const timers = new Map();
@@ -29,7 +32,12 @@ function setup() {
       hidden: false,
       disabled: false,
       focused: false,
+      dataset: {},
+      attributes: {},
       listeners: {},
+      setAttribute(name, value) {
+        this.attributes[name] = value;
+      },
       addEventListener(name, callback) {
         this.listeners[name] = callback;
       },
@@ -73,6 +81,9 @@ function setup() {
     },
     title() {
       return elements.get("#status-title").textContent;
+    },
+    mapStatus() {
+      return elements.get("#request-map").dataset.status;
     },
   };
 }
@@ -132,9 +143,30 @@ assert.equal(app.title(), "Request sent (demo)");
 app.runReceipt();
 assert.equal(app.title(), "Receipt simulated (demo)");
 
+// Kaart volgt de status; zonder Web Audio blijft de flow werken.
+const mapApp = setup();
+assert.equal(mapApp.mapStatus(), "idle");
+mapApp.click("#request-button");
+assert.equal(mapApp.mapStatus(), "sent");
+mapApp.runReceipt();
+assert.equal(mapApp.mapStatus(), "received");
+mapApp.click("#cancel-button");
+assert.equal(mapApp.mapStatus(), "cancelled");
+
+// Geluidsknop wisselt tussen aan en uit, ook voor schermlezers.
+const toggle = mapApp.elements.get("#sound-toggle");
+const toggleLabel = mapApp.elements.get("#sound-toggle-label");
+assert.equal(toggle.attributes["aria-pressed"], "true");
+mapApp.click("#sound-toggle");
+assert.equal(toggle.attributes["aria-pressed"], "false");
+assert.equal(toggleLabel.textContent, "Sound off");
+mapApp.click("#sound-toggle");
+assert.equal(toggleLabel.textContent, "Sound on");
+
 // Vernieuwen begint een nieuwe lokale sessie, zonder opgeslagen verzoek.
 assert.equal(setup().title(), "No active request");
 console.log(
   "Geslaagd: openen, aanvragen, dubbele klikken, demo-ontvangst, " +
-    "annuleren vóór/na ontvangst, opnieuw aanvragen en oude callbacks.",
+    "annuleren vóór/na ontvangst, opnieuw aanvragen, oude callbacks, " +
+    "kaartstatus en geluidsknop.",
 );
