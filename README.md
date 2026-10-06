@@ -1,26 +1,65 @@
-# Linked
+# Linked — eerste prototype
 
-A responsive browser prototype based on the Linked concept document (30 September 2026). No installation or build step is needed.
+Deze fase richt zich op vier user stories: openen, hulp aanvragen,
+status bekijken en annuleren. Het conceptdocument van 30 september 2026
+beschrijft de richting voor later, niet de scope van dit prototype.
 
-Open `index.html`, or serve this directory on localhost for reliable geolocation and cross-tab storage. Google Fonts is optional; system fonts provide a fallback.
+## Starten
 
-## Try it
+Open `index.html` in een browser. Er is geen installatie, build of server
+nodig. De app werkt lokaal, ook zonder internet. Voor testen op een telefoon
+kun je de bestanden lokaal openen of via jullie eigen lokale webserver
+beschikbaar maken.
 
-1. Press **I need help**, or use **Try the bracelet demo**.
-2. Allow location access, or save a meeting point if location is unavailable.
-3. Open **Help point** to see the incoming alert.
-4. Open **Volunteer**, switch on availability, and accept the alert.
-5. Return to **Your night** to see the accepted state.
-6. Close the response from **Help point**, or cancel it from **Your night**. Location and meeting point are cleared.
+## De flow testen
 
-The browser requests a single location only after an alert is triggered. It does not track continuously. Late geolocation results are discarded after cancellation or closure. Unassigned volunteers do not see exact location in their view. The optional map link shares coordinates with OpenStreetMap when opened.
+1. Open de pagina: **Hulp aanvragen** is direct beschikbaar.
+2. Klik: **Verzonden — demo** verschijnt en annuleren wordt beschikbaar.
+3. Wacht ongeveer 1,5 seconde: **Ontvangst gesimuleerd — demo** verschijnt.
+4. Klik op **Verzoek annuleren**: de annulering wordt bevestigd.
+5. Klik op **Opnieuw hulp aanvragen**: een nieuw verzoek begint.
+6. Herhaal, maar annuleer vóór de ontvangstsimulatie. Wacht daarna:
+   de status blijft geannuleerd.
+7. Klik snel meerdere keren: er ontstaat maximaal één actief verzoek.
+8. Test met Tab en Enter en op een smal scherm (bijvoorbeeld 320–390 px).
 
-## Prototype boundaries
+Verzending en ontvangst worden alleen in dezelfde pagina gesimuleerd.
+Er is geen backend, echte ontvanger of hulp onderweg. Annulering stopt
+het lokale verzoek en de wachtende ontvangstsimulatie. Deze demo verwerkt
+geen locatie of persoonsgegevens en bewaart geen verzoeken. Vernieuwen
+of sluiten eindigt de lokale demo; andere tabbladen zijn aparte sessies.
 
-No real alert delivery, emergency response, authentication, partner integration, or bracelet hardware connection is implemented. The help point and Alex are demonstration roles, not confirmed partners. Data is saved in localStorage in this browser; this is not a secure multi-user service. Role tabs are demonstration interfaces, not access control. **Reset demo** clears local demo data. Geolocation requires browser permission and typically HTTPS or localhost. Browser storage may behave differently for directly opened files.
+## Geautomatiseerde controle
 
-Real deployment needs an authenticated service, alert delivery and acknowledgments, verified responder access, an agreed retention policy, and an implemented bracelet transport. The document leaves these decisions open.
+Met Node.js geïnstalleerd:
 
-## Verification
+```powershell
+node app.test.cjs
+node --check app.js
+```
 
-Run `node app.test.cjs` for the alert lifecycle, location consent, cancellation, late callbacks, volunteer availability, escaped meeting points, persistence, and cross-tab synchronization checks. These use a simulated browser environment; they do not replace visual browser testing.
+De test gebruikt de echte appcode met een gesimuleerde DOM en timers.
+Hij controleert de complete flow, dubbele klikken, annuleren vóór en na
+ontvangst, opnieuw starten en callbacks van oude verzoeken. Dit vervangt
+geen gebruikerstest op een echte telefoon.
+
+## Code lezen
+
+- `index.html`: één gebruikersscherm met vaste knoppen en statusvelden.
+- `styles.css`: de bestaande groene stijl, kaarten en mobiele indeling.
+- `app.js`: vier statussen, twee acties en één ontvangsttimer.
+- `app.test.cjs`: reproduceerbare controles zonder extra dependencies.
+
+De code bevat Nederlandse uitleg en korte, verticaal opgemaakte regels.
+`render()` past tekst en zichtbaarheid aan; eventhandlers veranderen de
+status. De ontvangsttimer is de enige asynchrone stap.
+
+## Bewaarde uitgebreide versie
+
+De bestaande versie, inclusief alle toen niet-gecommitte bestanden,
+is bewaard op `archive/linked-expanded-prototype`, commit `57a6b83`.
+Deze vereenvoudiging staat op `feature/linked-phase-one-flow`.
+Er is geen Git-geschiedenis herschreven en niets gepusht.
+
+De analyse, scopekeuzes, rol van Codex en voorgestelde acht weken
+vervolgwerk staan in [PROJECTKEUZES.md](PROJECTKEUZES.md).

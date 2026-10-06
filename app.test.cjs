@@ -1,192 +1,140 @@
-// Run with: node app.test.cjs
-// These tests use Node built-ins and a simulated browser; no dependencies
-// needed.
-// assert checks expected results, fs reads the app, and vm runs it in
-// isolation.
+// Start met: node app.test.cjs
+// Node simuleert de DOM en timers. De test gebruikt de echte app.js,
+// maar geen echte browser, locatie, opslag of netwerkverbinding.
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
-const source = fs.readFileSync("app.js", "utf8");
-// Create a fresh browser-like environment for each scenario, optionally with
-// saved data.
-function setup(saved = null) {
-  // Maps stand in for DOM elements and storage. callbacks captures location
-  // requests
-  // so tests can decide when they succeed/fail. listeners captures browser
-  // events.
-  // Minimal element objects expose the properties app.js uses. This is a logic
-  // test,
-  // not a real DOM renderer: it does not verify layout, focus or browser
-  // behavior.
+const path = require("node:path");
+
+const source = fs.readFileSync(path.join(__dirname, "app.js"), "utf8");
+const html = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
+
+function setup() {
+  const selectors = [
+    "#request-button",
+    "#request-button-label",
+    "#cancel-button",
+    "#status-title",
+    "#status-description",
+  ];
   const elements = new Map();
-  const callbacks = [];
-  const storage = new Map(saved ? [["linked-demo-v1", saved]] : []);
-  const listeners = {};
-  const element = (selector) => {
-    if (!elements.has(selector))
-      elements.set(selector, {
-        innerHTML: "",
-        textContent: "",
-        hidden: false,
-        value: "",
-        classList: { toggle() {} },
-        setAttribute() {},
-      });
-    return elements.get(selector);
-  };
-  // Supply fake browser APIs instead of accessing real locations or saved
-  // alerts.
+  const timers = new Map();
+  let nextTimer = 0;
+
+  for (const selector of selectors) {
+    // Controleer ook dat de knoppen/statusvelden echt in de HTML staan.
+    assert.ok(html.includes(`id="${selector.slice(1)}"`));
+    elements.set(selector, {
+      textContent: "",
+      hidden: false,
+      disabled: false,
+      focused: false,
+      listeners: {},
+      addEventListener(name, callback) {
+        this.listeners[name] = callback;
+      },
+      focus() {
+        this.focused = true;
+      },
+    });
+  }
+
   const context = vm.createContext({
-    document: { querySelector: element, querySelectorAll: () => [] },
-    navigator: {
-      geolocation: {
-        getCurrentPosition: (success, error) =>
-          callbacks.push({ success, error }),
+    document: {
+      querySelector(selector) {
+        assert.ok(elements.has(selector), `Onbekend element: ${selector}`);
+        return elements.get(selector);
       },
     },
-    localStorage: {
-      getItem: (key) => storage.get(key) || null,
-      setItem: (key, value) => storage.set(key, value),
+    setTimeout(callback, delay) {
+      assert.equal(delay, 1500);
+      nextTimer += 1;
+      timers.set(nextTimer, callback);
+      return nextTimer;
     },
-    window: {
-      addEventListener: (name, callback) => (listeners[name] = callback),
+    clearTimeout(id) {
+      timers.delete(id);
     },
-    // Timers are stubbed so notification delays do not slow the test process.
-    setTimeout: () => 1,
-    clearTimeout() {},
-    console,
   });
-  // Evaluate the actual app, then expose a helper to run actions/read state
-  // inside it.
   vm.runInContext(source, context);
+
   return {
-    run: (code) => vm.runInContext(code, context),
     elements,
-    callbacks,
-    storage,
-    listeners,
+    timers,
+    click(selector) {
+      // Roep de gekoppelde handler aan, zelfs bij een verborgen knop.
+      // Zo testen we ook de extra bescherming binnen startRequest().
+      elements.get(selector).listeners.click();
+    },
+    runReceipt() {
+      const [id, callback] = timers.entries().next().value;
+      timers.delete(id);
+      callback();
+    },
+    title() {
+      return elements.get("#status-title").textContent;
+    },
   };
 }
-// Startup must not request location without the visitor pressing a button.
-const t = setup();
-assert.equal(t.callbacks.length, 0, "No location request on startup");
-// A first alert requests location once; a second trigger must not duplicate it.
-t.run("trigger('App')");
-assert.equal(t.callbacks.length, 1);
-assert.equal(t.run("activeAlert().status"), "received");
-t.run("trigger('Bracelet')");
-assert.equal(
-  t.callbacks.length,
-  1,
-  "Duplicate trigger does not create another alert",
-);
-assert.equal(t.run("state.alerts.length"), 1);
-// Simulate permission success. Unassigned volunteers must not see the map link.
-t.callbacks[0].success({
-  coords: { latitude: 51.44, longitude: 5.48, accuracy: 20 },
-});
-assert.equal(t.run("activeAlert().location.lat"), 51.44);
+
+// Stories 1 en 2: openen, aanvragen en herhaald klikken.
+const app = setup();
+assert.equal(app.title(), "Nog geen actief verzoek");
+assert.equal(app.elements.get("#request-button").hidden, false);
+assert.equal(app.elements.get("#cancel-button").hidden, true);
+assert.equal(app.timers.size, 0);
+app.click("#request-button");
+assert.equal(app.title(), "Verzonden — demo");
+assert.equal(app.elements.get("#request-button").disabled, true);
+assert.equal(app.elements.get("#cancel-button").hidden, false);
+assert.equal(app.elements.get("#cancel-button").focused, true);
+for (let click = 0; click < 10; click += 1) {
+  app.click("#request-button");
+}
+assert.equal(app.timers.size, 1, "Slechts één actief verzoek/timer");
+
+// Story 3: verzonden is nog geen ontvangst. Ontvangst is expliciet demo.
+app.runReceipt();
+assert.equal(app.title(), "Ontvangst gesimuleerd — demo");
 assert.ok(
-  !t.run("alertMarkup(activeAlert(),'volunteer')").includes("mlat="),
-  "Unassigned volunteer cannot see location",
+  app.elements.get("#status-description").textContent.includes(
+    "Geen echte hulpverlener",
+  ),
 );
-// Off-duty acceptance is blocked; switching on availability enables assignment.
-t.run("acceptAlert(activeAlert().id)");
+app.click("#request-button");
+assert.equal(app.timers.size, 0, "Ontvangen verzoek blijft actief");
+
+// Story 4: annuleren na ontvangst en opnieuw aanvragen.
+app.click("#cancel-button");
+assert.equal(app.title(), "Verzoek geannuleerd");
+assert.equal(app.elements.get("#request-button").hidden, false);
+assert.equal(app.elements.get("#request-button").disabled, false);
+assert.equal(app.elements.get("#request-button").focused, true);
 assert.equal(
-  t.run("activeAlert().status"),
-  "received",
-  "Off-duty acceptance is blocked",
+  app.elements.get("#request-button-label").textContent,
+  "Opnieuw hulp aanvragen",
 );
-t.run("state.duty=true; acceptAlert(activeAlert().id)");
-assert.equal(t.run("activeAlert().status"), "accepted");
-assert.ok(
-  t.elements.get("#help-content").innerHTML.includes("Alex has accepted"),
-);
-assert.ok(t.run("alertMarkup(activeAlert(),'volunteer')").includes("mlat="));
-// Closing an alert removes both coordinates and meeting point, including
-// storage.
-t.run(
-  "activeAlert().meetingPoint='Entrance'; " +
-    "closeAlert(activeAlert().id,'closed')",
-);
-assert.equal(t.run("state.alerts[0].location"), null);
-assert.equal(t.run("state.alerts[0].meetingPoint"), "");
-assert.ok(
-  !t.storage.get("linked-demo-v1").includes("51.44"),
-  "Closed coordinates removed from storage",
-);
-// A location result arriving after cancellation must not restore private data.
-t.run("trigger('Bracelet'); closeAlert(activeAlert().id,'cancelled')");
-t.callbacks[1].success({
-  coords: { latitude: 52, longitude: 6, accuracy: 10 },
-});
-assert.equal(
-  t.run("state.alerts[0].location"),
-  null,
-  "Late permission result ignored after cancel",
-);
-t.run("trigger('App')");
-// Permission denial leaves the meeting-point fallback available.
-t.callbacks[2].error({ code: 1 });
-assert.equal(t.run("activeAlert().locationStatus"), "denied");
-assert.ok(t.elements.get("#help-content").innerHTML.includes("meeting-point"));
-// HTML-looking meeting points must be displayed as text instead of executable
-// HTML.
-t.run("activeAlert().meetingPoint='<img src=x onerror=alert(1)>'");
-assert.ok(
-  t.run("alertMarkup(activeAlert(),'desk')").includes("&lt;img"),
-  "Meeting points are escaped",
-);
-// Reloading saved data must not automatically restart geolocation.
-const restored = setup(t.storage.get("linked-demo-v1"));
-assert.equal(
-  restored.callbacks.length,
-  0,
-  "Restoring an alert never starts location collection",
-);
-// Simulate another tab accepting an alert while its location request is
-// pending.
-const pending = setup();
-pending.run("trigger('App')");
-const updated = JSON.parse(pending.storage.get("linked-demo-v1"));
-updated.duty = true;
-updated.alerts[0].status = "accepted";
-pending.listeners.storage({
-  key: "linked-demo-v1",
-  newValue: JSON.stringify(updated),
-});
-pending.callbacks[0].success({
-  coords: { latitude: 51, longitude: 5, accuracy: 10 },
-});
-assert.equal(pending.run("activeAlert().status"), "accepted");
-assert.equal(
-  pending.run("activeAlert().location.lat"),
-  51,
-  "Cross-tab update preserves pending callback",
-);
-// Deleting shared storage resets the current tab too.
-pending.listeners.storage({ key: "linked-demo-v1", newValue: null });
-assert.equal(pending.run("state.alerts.length"), 0);
-// A reload interrupts pending requests; mark them unavailable to enable retry.
-const reloaded = setup(
-  JSON.stringify({
-    alerts: [
-      {
-        id: "a",
-        status: "received",
-        source: "App",
-        locationStatus: "pending",
-        time: Date.now(),
-      },
-    ],
-  }),
-);
-assert.equal(
-  reloaded.run("activeAlert().locationStatus"),
-  "unavailable",
-  "Interrupted location request can be retried",
-);
+app.click("#request-button");
+assert.equal(app.title(), "Verzonden — demo");
+assert.equal(app.timers.size, 1);
+
+// Annuleer ook vóór ontvangst. Zelfs een oude callback mag niet herleven.
+const oldReceipt = app.timers.values().next().value;
+app.click("#cancel-button");
+assert.equal(app.timers.size, 0);
+oldReceipt();
+assert.equal(app.title(), "Verzoek geannuleerd");
+app.click("#cancel-button");
+assert.equal(app.title(), "Verzoek geannuleerd");
+app.click("#request-button");
+oldReceipt();
+assert.equal(app.title(), "Verzonden — demo");
+app.runReceipt();
+assert.equal(app.title(), "Ontvangst gesimuleerd — demo");
+
+// Vernieuwen begint een nieuwe lokale sessie, zonder opgeslagen verzoek.
+assert.equal(setup().title(), "Nog geen actief verzoek");
 console.log(
-  "Passed: alert lifecycle, privacy, permissions, duplicate prevention, " +
-    "volunteer duty, escaping, persistence, cross-tab updates.",
+  "Geslaagd: openen, aanvragen, dubbele klikken, demo-ontvangst, " +
+    "annuleren vóór/na ontvangst, opnieuw aanvragen en oude callbacks.",
 );
