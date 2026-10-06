@@ -76,3 +76,5 @@ Er is geen Git-geschiedenis herschreven en niets gepusht.
 
 De analyse, scopekeuzes, rol van Codex en voorgestelde acht weken
 vervolgwerk staan in [PROJECTKEUZES.md](PROJECTKEUZES.md).
+
+<!-- Rayan feature branch initialized -->
