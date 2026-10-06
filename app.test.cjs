@@ -1,6 +1,3 @@
-// Start met: node app.test.cjs
-// Node simuleert de DOM en timers. De test gebruikt de echte app.js,
-// maar geen echte browser, locatie, opslag of netwerkverbinding.
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
@@ -25,7 +22,6 @@ function setup() {
   let nextTimer = 0;
 
   for (const selector of selectors) {
-    // Controleer ook dat de knoppen/statusvelden echt in de HTML staan.
     assert.ok(html.includes(`id="${selector.slice(1)}"`));
     elements.set(selector, {
       textContent: "",
@@ -70,8 +66,6 @@ function setup() {
     elements,
     timers,
     click(selector) {
-      // Roep de gekoppelde handler aan, zelfs bij een verborgen knop.
-      // Zo testen we ook de extra bescherming binnen startRequest().
       elements.get(selector).listeners.click();
     },
     runReceipt() {
@@ -88,7 +82,6 @@ function setup() {
   };
 }
 
-// Stories 1 en 2: openen, aanvragen en herhaald klikken.
 const app = setup();
 assert.equal(app.title(), "No active request");
 assert.equal(app.elements.get("#request-button").hidden, false);
@@ -104,7 +97,6 @@ for (let click = 0; click < 10; click += 1) {
 }
 assert.equal(app.timers.size, 1, "Slechts één actief verzoek/timer");
 
-// Story 3: verzonden is nog geen ontvangst. Ontvangst is expliciet demo.
 app.runReceipt();
 assert.equal(app.title(), "Receipt simulated (demo)");
 assert.ok(
@@ -115,7 +107,6 @@ assert.ok(
 app.click("#request-button");
 assert.equal(app.timers.size, 0, "Ontvangen verzoek blijft actief");
 
-// Story 4: annuleren na ontvangst en opnieuw aanvragen.
 app.click("#cancel-button");
 assert.equal(app.title(), "Request cancelled");
 assert.equal(app.elements.get("#request-button").hidden, false);
@@ -129,7 +120,6 @@ app.click("#request-button");
 assert.equal(app.title(), "Request sent (demo)");
 assert.equal(app.timers.size, 1);
 
-// Annuleer ook vóór ontvangst. Zelfs een oude callback mag niet herleven.
 const oldReceipt = app.timers.values().next().value;
 app.click("#cancel-button");
 assert.equal(app.timers.size, 0);
@@ -143,7 +133,6 @@ assert.equal(app.title(), "Request sent (demo)");
 app.runReceipt();
 assert.equal(app.title(), "Receipt simulated (demo)");
 
-// Kaart volgt de status; zonder Web Audio blijft de flow werken.
 const mapApp = setup();
 assert.equal(mapApp.mapStatus(), "idle");
 mapApp.click("#request-button");
@@ -153,7 +142,6 @@ assert.equal(mapApp.mapStatus(), "received");
 mapApp.click("#cancel-button");
 assert.equal(mapApp.mapStatus(), "cancelled");
 
-// Geluidsknop wisselt tussen aan en uit, ook voor schermlezers.
 const toggle = mapApp.elements.get("#sound-toggle");
 const toggleLabel = mapApp.elements.get("#sound-toggle-label");
 assert.equal(toggle.attributes["aria-pressed"], "true");
@@ -163,7 +151,6 @@ assert.equal(toggleLabel.textContent, "Sound off");
 mapApp.click("#sound-toggle");
 assert.equal(toggleLabel.textContent, "Sound on");
 
-// Vernieuwen begint een nieuwe lokale sessie, zonder opgeslagen verzoek.
 assert.equal(setup().title(), "No active request");
 console.log(
   "Geslaagd: openen, aanvragen, dubbele klikken, demo-ontvangst, " +

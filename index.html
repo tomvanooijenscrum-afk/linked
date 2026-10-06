@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <!-- De drie bestaande bestanden blijven de structuur van het project. -->
     <meta charset="UTF-8" />
     <meta
       name="viewport"
@@ -10,7 +9,6 @@
     <meta name="theme-color" content="#183e37" />
     <title>Linked | Ask for help</title>
     <link rel="stylesheet" href="styles.css" />
-    <!-- defer laat app.js pas starten nadat de HTML beschikbaar is. -->
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -20,7 +18,6 @@
         linked<span>.</span>
       </span>
       <div class="header-actions">
-        <!-- Geluid staat standaard aan; deze knop zet het uit of aan. -->
         <button
           id="sound-toggle"
           class="sound-toggle"
@@ -48,7 +45,6 @@
         <h2 id="request-title">Need help?</h2>
         <p>You can reach out, even if you’re not sure.</p>
 
-        <!-- Vaste knoppen: JavaScript wisselt hun zichtbaarheid en tekst. -->
         <button id="request-button" class="primary" type="button">
           <span id="request-button-label">Ask for help</span>
           <span aria-hidden="true">↗</span>
@@ -62,7 +58,6 @@
           Cancel request
         </button>
 
-        <!-- Statusupdates worden ook door schermlezers aangekondigd. -->
         <div
           id="request-status"
           class="status-banner"
@@ -76,8 +71,6 @@
           </p>
         </div>
 
-        <!-- Illustratieve kaart: geen echte locatie, geen kaarttegels
-             van internet. CSS animeert de kaart via data-status. -->
         <figure
           id="request-map"
           class="request-map"
@@ -123,7 +116,6 @@
           </figcaption>
         </figure>
 
-        <!-- Deze uitleg blijft zichtbaar in iedere status. -->
         <p class="demo-note">
           Demo only. No real request is sent and no help is on the way.
           In an emergency, call <a href="tel:112">112</a>.
