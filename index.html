@@ -1,11 +1,319 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-
-</body>
+  <!--
+    HTML defines the page structure; CSS styles it; app.js supplies its
+    behavior.
+  -->
+  <head>
+    <!--
+      UTF-8 supports punctuation/symbols; viewport makes mobile sizing work.
+    -->
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <meta
+      name="theme-color"
+      content="#183e37"
+    />
+    <title>Linked — A little closer to help</title>
+    <link
+      rel="stylesheet"
+      href="styles.css"
+    />
+    <!--
+      defer waits until the HTML is parsed before app.js looks up its elements.
+    -->
+    <script
+      src="app.js"
+      defer
+    ></script>
+  </head>
+  <body>
+    <!--
+      Navigation uses data-view values matched by switchView() in app.js.
+    -->
+    <header>
+      <a
+        class="brand"
+        href="#"
+        aria-label="Linked home"
+        ><b>↗</b>linked<span>.</span></a
+      >
+      <nav aria-label="App views">
+        <button
+          class="nav active"
+          data-view="home"
+        >
+          Your night</button
+        ><button
+          class="nav"
+          data-view="volunteer"
+        >
+          Volunteer</button
+        ><button
+          class="nav"
+          data-view="desk"
+        >
+          Help point
+        </button>
+      </nav>
+      <button
+        id="about"
+        class="about"
+        aria-label="About this prototype"
+      >
+        ?
+      </button>
+    </header>
+    <main>
+      <!--
+        Location context and a visible reminder that this is an interactive
+        demo.
+      -->
+      <div class="context">
+        <span><i class="dot"></i> EINDHOVEN, AFTER DARK</span
+        ><span class="demo-label">Interactive concept · demo</span>
+      </div>
+      <!--
+        Visitor view is visible initially. Other roles start with the hidden
+        attribute.
+      -->
+      <section id="home-view">
+        <!--
+          Introduction and CSS artwork. aria-hidden excludes decoration from
+          screen readers.
+        -->
+        <div class="intro">
+          <div>
+            <span class="eyebrow">GOOD NIGHTS. TOGETHER.</span>
+            <h1>A little closer<br />to <em>help.</em></h1>
+            <p>
+              You deserve to feel safe on your night out.<br />When something
+              feels wrong, reach out. We’re here.
+            </p>
+          </div>
+          <div
+            class="art"
+            aria-hidden="true"
+          >
+            <div class="orbit"></div>
+            <div class="orbit second"></div>
+            <span class="star">✳</span>
+            <div class="pill">You’re not alone <span>↗</span></div>
+            <div class="heart">♡</div>
+            <div class="caption">A connection can<br />change your night.</div>
+          </div>
+        </div>
+        <!--
+          Two-column content: alert card on the left, privacy/bracelet cards on
+          the right. app.js fills #help-content and #privacy-status whenever
+          state changes.
+        -->
+        <div class="grid">
+          <section class="help-card">
+            <div class="card-top">
+              <span class="eyebrow">YOUR CONNECTION TO SUPPORT</span
+              ><span class="tag">App alert</span>
+            </div>
+            <div id="help-content"></div>
+          </section>
+          <aside>
+            <section class="privacy-card">
+              <span class="privacy-icon">⌖</span>
+              <h3>Your location. Your choice.</h3>
+              <p>
+                Location is only requested when you ask for help. It stops being
+                shared when your alert is closed.
+              </p>
+              <div
+                id="privacy-status"
+                class="privacy-status"
+              ></div>
+            </section>
+            <section class="bracelet-card">
+              <div>
+                <span class="eyebrow">MEETING US AT AN EVENT?</span>
+                <h3>A small bracelet.<br />A connection to help.</h3>
+                <p>No app setup needed.</p>
+                <button
+                  id="bracelet"
+                  class="text-button"
+                >
+                  Try the bracelet demo ↗
+                </button>
+              </div>
+              <div
+                class="bracelet-art"
+                aria-hidden="true"
+              >
+                <span>linked.</span><i></i>
+              </div>
+            </section>
+          </aside>
+        </div>
+        <!--
+          Static explanation of the three stages in the intended response
+          workflow.
+        -->
+        <section class="steps-section">
+          <div class="section-heading">
+            <h2>One request. A human response.</h2>
+            <span>A little clarity when you need it most</span>
+          </div>
+          <div class="steps">
+            <article>
+              <b>01</b>
+              <div>
+                <h3>Ask for help</h3>
+                <p>
+                  Press the button if you feel unsafe.<br />You don’t need to
+                  explain everything.
+                </p>
+              </div>
+            </article>
+            <article>
+              <b>02</b>
+              <div>
+                <h3>Get connected</h3>
+                <p>
+                  A central help point receives your alert<br />and coordinates
+                  nearby volunteers.
+                </p>
+              </div>
+            </article>
+            <article>
+              <b>03</b>
+              <div>
+                <h3>Someone comes to you</h3>
+                <p>
+                  You’ll see when a volunteer accepts.<br />The help point stays
+                  involved.
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+      </section>
+      <!--
+        Volunteer controls: #on-duty updates availability; app.js fills
+        #volunteer-alerts.
+      -->
+      <section
+        id="volunteer-view"
+        class="role-view"
+        hidden
+      >
+        <span class="eyebrow">BE SOMEONE’S CONNECTION</span>
+        <h1>Here to <em>help.</em></h1>
+        <p>Accept an alert and let the help point coordinate the response.</p>
+        <div class="toolbar">
+          <label
+            ><input
+              type="checkbox"
+              id="on-duty"
+            />
+            Available for alerts</label
+          ><span class="muted">Demo volunteer · Alex</span>
+        </div>
+        <div id="volunteer-alerts"></div>
+      </section>
+      <!--
+        Help point: app.js fills the active count and alert/history cards here.
+      -->
+      <section
+        id="desk-view"
+        class="role-view"
+        hidden
+      >
+        <span class="eyebrow">CENTRAL HELP POINT</span>
+        <h1>Keep everyone <em>connected.</em></h1>
+        <p>App and bracelet alerts arrive in the same place.</p>
+        <div class="toolbar">
+          <strong>Event safety desk <span class="tag">Demo</span></strong
+          ><span
+            id="desk-count"
+            class="muted"
+          ></span>
+        </div>
+        <div id="desk-alerts"></div>
+      </section>
+      <!--
+        Reset removes locally stored demo alerts, including their coordinates.
+      -->
+      <footer>
+        <span class="brand">linked.</span
+        ><span>A safer night starts with connection.</span
+        ><button
+          id="reset"
+          class="text-button"
+        >
+          Reset demo ↺
+        </button>
+      </footer>
+    </main>
+    <!--
+      Native modal: opened with showModal(), closed with close() or Escape.
+    -->
+    <dialog id="info-dialog">
+      <button
+        class="dialog-close"
+        aria-label="Close"
+      >
+        ×</button
+      ><span class="eyebrow">ABOUT THIS CONCEPT</span>
+      <h2>Built around human help.</h2>
+      <p>
+        Linked explores support for young women and LGBTQI+ people on nights out
+        in Eindhoven.
+      </p>
+      <p>
+        This prototype saves demo alerts only in your browser. It does not
+        contact volunteers, an event desk, or emergency services. No partner
+        participation is confirmed.
+      </p>
+      <p>
+        Use the Volunteer and Help point views to try the response workflow.
+        Bracelet connectivity is simulated.
+      </p>
+      <button class="secondary dialog-dismiss">Got it</button>
+    </dialog>
+    <!--
+      Bracelet explanation and simulation button; no hardware connection is
+      used.
+    -->
+    <dialog id="bracelet-dialog">
+      <button
+        class="dialog-close"
+        aria-label="Close"
+      >
+        ×</button
+      ><span class="eyebrow">EVENT BRACELET · DEMO</span>
+      <h2>Help within reach.</h2>
+      <p>
+        At an event, a bracelet could connect you to the same help point without
+        setting up the app.
+      </p>
+      <p>
+        This simulates its button. Your browser can provide location after you
+        press it; real bracelet connectivity is still to be decided.
+      </p>
+      <button
+        id="bracelet-trigger"
+        class="primary"
+      >
+        Simulate bracelet alert ↗
+      </button>
+    </dialog>
+    <!--
+      Temporary notification. role=status announces updates without moving
+      focus.
+    -->
+    <div
+      id="toast"
+      role="status"
+      hidden
+    ></div>
+  </body>
 </html>
