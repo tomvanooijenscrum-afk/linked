@@ -1,0 +1,256 @@
+/* De groene kleuren, afgeronde kaarten en typografie blijven herkenbaar. */
+:root {
+  --green: #183e37;
+  --muted: #586354;
+  --paper: #f8f9f5;
+  --border: #e1e5da;
+}
+
+/* Padding en borders vallen binnen de opgegeven breedte. */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--green);
+  font-family: "DM Sans", "Segoe UI", sans-serif;
+  font-size: 16px;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Tab-navigatie krijgt een duidelijke focusrand. */
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #769a40;
+  outline-offset: 4px;
+}
+
+header {
+  max-width: 1120px;
+  min-height: 88px;
+  margin: auto;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  font-size: 35px;
+  font-weight: 800;
+  letter-spacing: -2px;
+}
+
+.brand b {
+  width: 34px;
+  border: 2px solid var(--green);
+  border-radius: 11px;
+  font-size: 29px;
+  line-height: 31px;
+  text-align: center;
+  transform: rotate(-12deg);
+  letter-spacing: 0;
+}
+
+.brand span {
+  color: #8aab54;
+  margin-left: -9px;
+}
+
+.demo-label {
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.demo-label {
+  border: 1px solid var(--border);
+}
+
+main {
+  max-width: 760px;
+  margin: auto;
+  padding: 40px 32px;
+}
+
+.intro {
+  max-width: 720px;
+  margin-bottom: 32px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+h1 {
+  margin: 16px 0;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  font-size: clamp(32px, 5vw, 58px);
+  line-height: 1.12;
+  font-weight: 500;
+  letter-spacing: -2px;
+}
+
+h1 em {
+  font-family: Georgia, serif;
+  font-weight: 400;
+}
+
+p {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+/* Eén hulpkaart houdt de aanvraag en status bij elkaar. */
+.help-card {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 28px;
+  background: white;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+h2 {
+  margin: 20px 0 10px;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+}
+
+.help-card > p {
+  margin-top: 0;
+}
+
+/* De twee acties vullen de kaart en hebben ruime aanraakvlakken. */
+.primary,
+.secondary {
+  width: 100%;
+  min-height: 56px;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 12px 0 0;
+  font-weight: 600;
+}
+
+.primary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--green);
+  color: white;
+  border: 1px solid var(--green);
+}
+
+.primary:hover {
+  background: #29584c;
+}
+
+.secondary {
+  background: white;
+  color: var(--green);
+  border: 1px solid #9cae91;
+}
+
+.secondary:hover {
+  background: #edf2e5;
+}
+
+/* De bevestiging blijft staan totdat een nieuw verzoek wordt gestart. */
+.status-banner {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 10px;
+  background: #edf2e5;
+}
+
+.status-banner strong {
+  display: block;
+}
+
+.status-banner p {
+  margin: 8px 0 0;
+  font-size: 14px;
+}
+
+.help-card .demo-note {
+  margin: 20px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.demo-note a {
+  color: var(--green);
+}
+
+/* hidden moet ook werken voor de knop met display:flex. */
+[hidden] {
+  display: none !important;
+}
+
+/* Compacte bovenkant houdt de hulpknop dichtbij op een telefoon. */
+@media (max-width: 760px) {
+  header {
+    min-height: 64px;
+    padding: 12px 20px;
+  }
+
+  .brand {
+    font-size: 28px;
+  }
+
+  .brand b {
+    display: none;
+  }
+
+  .demo-label {
+    font-size: 11px;
+  }
+
+  main {
+    padding: 24px 20px;
+  }
+
+  .intro {
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    letter-spacing: -1px;
+  }
+
+  .intro p {
+    font-size: 14px;
+    margin-bottom: 0;
+  }
+
+  .help-card {
+    padding: 22px;
+  }
+
+}

@@ -1,11 +1,83 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
+  <head>
+    <!-- De drie bestaande bestanden blijven de structuur van het project. -->
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <meta name="theme-color" content="#183e37" />
+    <title>Linked | Ask for help</title>
+    <link rel="stylesheet" href="styles.css" />
+    <!-- defer laat app.js pas starten nadat de HTML beschikbaar is. -->
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <span class="brand" aria-label="Linked">
+        <b aria-hidden="true">↗</b>
+        linked<span>.</span>
+      </span>
+      <span class="demo-label">Demo</span>
+    </header>
 
-</body>
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <span class="eyebrow">A FIRST STEP TOWARDS HELP</span>
+        <h1 id="page-title">A little closer to <em>help.</em></h1>
+        <p>When something feels wrong, you can ask for help.</p>
+      </section>
+
+      <section class="help-card" aria-labelledby="request-title">
+        <div class="card-top">
+          <span class="eyebrow">YOUR HELP REQUEST</span>
+        </div>
+        <h2 id="request-title">Need help?</h2>
+        <p>You can reach out, even if you’re not sure.</p>
+
+        <!-- Vaste knoppen: JavaScript wisselt hun zichtbaarheid en tekst. -->
+        <button id="request-button" class="primary" type="button">
+          <span id="request-button-label">Ask for help</span>
+          <span aria-hidden="true">↗</span>
+        </button>
+        <button
+          id="cancel-button"
+          class="secondary"
+          type="button"
+          hidden
+        >
+          Cancel request
+        </button>
+
+        <!-- Statusupdates worden ook door schermlezers aangekondigd. -->
+        <div
+          id="request-status"
+          class="status-banner"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <strong id="status-title">No active request</strong>
+          <p id="status-description">
+            You haven’t asked for help yet.
+          </p>
+        </div>
+
+        <!-- Deze uitleg blijft zichtbaar in iedere status. -->
+        <p class="demo-note">
+          Demo only. No real request is sent and no help is on the way.
+          In an emergency, call <a href="tel:112">112</a>.
+        </p>
+        <noscript>
+          <p class="script-warning">
+            Enable JavaScript to use the help button.
+            Without JavaScript, no request will be started.
+          </p>
+        </noscript>
+      </section>
+
+    </main>
+
+  </body>
 </html>
