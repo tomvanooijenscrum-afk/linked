@@ -1,4 +1,4 @@
-# Linked — eerste prototype
+# Linked - eerste prototype
 
 Deze fase richt zich op vier user stories: openen, hulp aanvragen,
 status bekijken en annuleren. Het conceptdocument van 30 september 2026
