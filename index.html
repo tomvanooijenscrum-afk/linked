@@ -9,6 +9,7 @@
     <meta name="theme-color" content="#183e37" />
     <title>Linked | Ask for help</title>
     <link rel="stylesheet" href="styles.css" />
+    <script src="request-store.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -117,8 +118,8 @@
         </figure>
 
         <p class="demo-note">
-          Demo only. No real request is sent and no help is on the way.
-          In an emergency, call <a href="tel:112">112</a>.
+          Demo only. No real request is sent. In an emergency, call
+          <a href="tel:112">112</a>.
         </p>
         <noscript>
           <p class="script-warning">
@@ -128,6 +129,9 @@
         </noscript>
       </section>
 
+      <nav aria-label="Other views">
+        <a class="sound-toggle" href="volunteer.html">Open volunteer inbox</a>
+      </nav>
     </main>
 
   </body>

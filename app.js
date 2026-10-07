@@ -6,8 +6,10 @@ const statusDescription = document.querySelector("#status-description");
 const requestMap = document.querySelector("#request-map");
 const soundToggle = document.querySelector("#sound-toggle");
 const soundToggleLabel = document.querySelector("#sound-toggle-label");
+const requestStore = globalThis.LinkedRequestStore;
 
-let requestStatus = "idle";
+let activeRequest = requestStore.getRequest();
+let requestStatus = getStatusFromRequest(activeRequest);
 let receiptTimer = null;
 
 let requestNumber = 0;
@@ -26,7 +28,12 @@ const statusMessages = {
   received: {
     title: "Receipt simulated (demo)",
     description:
-      "No real responder has received this request.",
+      "Your request is available to volunteers in this demo inbox.",
+  },
+  accepted: {
+    title: "A volunteer is on the way",
+    description:
+      "Your request has been accepted. A volunteer is on the way.",
   },
   cancelled: {
     title: "Request cancelled",
@@ -88,7 +95,21 @@ function toggleSound() {
 }
 
 function isRequestActive() {
-  return requestStatus === "sent" || requestStatus === "received";
+  return (
+    requestStatus === "sent" ||
+    requestStatus === "received" ||
+    requestStatus === "accepted"
+  );
+}
+
+function getStatusFromRequest(request) {
+  if (!request) {
+    return "idle";
+  }
+  if (request.status === "accepted" || request.status === "cancelled") {
+    return request.status;
+  }
+  return "received";
 }
 
 function startRequest() {
@@ -100,6 +121,7 @@ function startRequest() {
 
   requestNumber += 1;
   const currentRequest = requestNumber;
+  activeRequest = requestStore.createRequest();
   requestStatus = "sent";
   playSound("sent");
   render();
@@ -131,7 +153,15 @@ function cancelRequest() {
   clearTimeout(receiptTimer);
   receiptTimer = null;
   requestNumber += 1;
-  requestStatus = "cancelled";
+  const cancelledRequest = requestStore.cancelRequest(activeRequest.id);
+  if (!cancelledRequest) {
+    activeRequest = requestStore.getRequest();
+    requestStatus = getStatusFromRequest(activeRequest);
+    render();
+    return;
+  }
+  activeRequest = cancelledRequest;
+  requestStatus = getStatusFromRequest(activeRequest);
   playSound("cancelled");
   render();
 
@@ -152,10 +182,24 @@ function render() {
     ? "Ask for help again"
     : "Ask for help";
 
-  requestMap.dataset.status = requestStatus;
+  requestMap.dataset.status =
+    requestStatus === "accepted" ? "received" : requestStatus;
   soundToggle.setAttribute("aria-pressed", String(soundEnabled));
   soundToggleLabel.textContent = soundEnabled ? "Sound on" : "Sound off";
 }
+
+globalThis.addEventListener("storage", (event) => {
+  if (event.key !== requestStore.storageKey) {
+    return;
+  }
+
+  clearTimeout(receiptTimer);
+  receiptTimer = null;
+  requestNumber += 1;
+  activeRequest = requestStore.getRequest();
+  requestStatus = getStatusFromRequest(activeRequest);
+  render();
+});
 
 requestButton.addEventListener("click", startRequest);
 cancelButton.addEventListener("click", cancelRequest);

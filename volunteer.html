@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#183e37" />
+    <title>Linked | Volunteer inbox</title>
+    <link rel="stylesheet" href="volunteer.css" />
+    <script src="request-store.js" defer></script>
+    <script src="volunteer.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <span class="brand" aria-label="Linked">
+        <b aria-hidden="true">↗</b>
+        linked<span>.</span>
+      </span>
+      <a class="back-link" href="index.html">Requester view</a>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <span class="eyebrow">VOLUNTEER INBOX</span>
+        <h1 id="page-title">A little help, <em>closer.</em></h1>
+        <p>Review a request and accept it when you’re ready to help.</p>
+      </section>
+
+      <section class="inbox-card" aria-labelledby="inbox-title">
+        <div class="card-top">
+          <span class="eyebrow">HELP REQUESTS</span>
+          <span class="inbox-badge">DEMO</span>
+        </div>
+        <h2 id="inbox-title">Requests for help</h2>
+        <p id="inbox-status" class="inbox-status" role="status" aria-live="polite">
+          No pending requests right now.
+        </p>
+
+        <article id="pending-request" class="request-card" hidden>
+          <div class="request-card-top">
+            <span class="request-indicator" aria-hidden="true"></span>
+            <span class="request-state">Pending request</span>
+          </div>
+          <h3>Help requested</h3>
+          <p id="request-received" class="request-received"></p>
+          <button
+            id="open-request"
+            class="secondary"
+            type="button"
+            aria-expanded="false"
+            aria-controls="request-details"
+          >
+            Open request
+          </button>
+          <div id="request-details" class="request-details" hidden>
+            <h4>Request details</h4>
+            <p>
+              The requester has asked for help. No additional details or real
+              location are included in this demo.
+            </p>
+            <button id="accept-request" class="primary" type="button">
+              Accept request
+              <span aria-hidden="true">↗</span>
+            </button>
+          </div>
+        </article>
+
+        <article id="accepted-request" class="request-card accepted-card" hidden>
+          <div class="request-card-top">
+            <span class="accepted-indicator" aria-hidden="true">✓</span>
+            <span class="request-state">Accepted</span>
+          </div>
+          <h3>You accepted this request</h3>
+          <p>
+            The requester has been notified that a volunteer is on the way.
+          </p>
+        </article>
+
+        <div id="empty-state" class="empty-state">
+          <span class="empty-mark" aria-hidden="true">↗</span>
+          <p>When a request comes in, it will appear here.</p>
+        </div>
+
+        <p class="demo-note">
+          Demo only. This inbox does not send a real request or share a real
+          location.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

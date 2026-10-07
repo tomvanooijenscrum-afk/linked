@@ -4,9 +4,26 @@ const vm = require("node:vm");
 const path = require("node:path");
 
 const source = fs.readFileSync(path.join(__dirname, "app.js"), "utf8");
+const storeSource = fs.readFileSync(
+  path.join(__dirname, "request-store.js"),
+  "utf8",
+);
 const html = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
 
-function setup() {
+function createStorage() {
+  const values = new Map();
+  return {
+    getItem(key) {
+      return values.has(key) ? values.get(key) : null;
+    },
+    setItem(key, value) {
+      values.set(key, value);
+    },
+  };
+}
+
+function setup(storage = createStorage()) {
+  assert.ok(html.includes('src="request-store.js"'));
   const selectors = [
     "#request-button",
     "#request-button-label",
@@ -19,6 +36,7 @@ function setup() {
   ];
   const elements = new Map();
   const timers = new Map();
+  const globalListeners = {};
   let nextTimer = 0;
 
   for (const selector of selectors) {
@@ -44,6 +62,10 @@ function setup() {
   }
 
   const context = vm.createContext({
+    localStorage: storage,
+    addEventListener(name, callback) {
+      globalListeners[name] = callback;
+    },
     document: {
       querySelector(selector) {
         assert.ok(elements.has(selector), `Onbekend element: ${selector}`);
@@ -60,13 +82,21 @@ function setup() {
       timers.delete(id);
     },
   });
+  vm.runInContext(storeSource, context);
   vm.runInContext(source, context);
 
   return {
     elements,
     timers,
+    store: context.LinkedRequestStore,
+    storage,
     click(selector) {
       elements.get(selector).listeners.click();
+    },
+    dispatchStorage() {
+      globalListeners.storage({
+        key: context.LinkedRequestStore.storageKey,
+      });
     },
     runReceipt() {
       const [id, callback] = timers.entries().next().value;
@@ -101,7 +131,7 @@ app.runReceipt();
 assert.equal(app.title(), "Receipt simulated (demo)");
 assert.ok(
   app.elements.get("#status-description").textContent.includes(
-    "No real responder",
+    "available to volunteers",
   ),
 );
 app.click("#request-button");
@@ -141,6 +171,30 @@ mapApp.runReceipt();
 assert.equal(mapApp.mapStatus(), "received");
 mapApp.click("#cancel-button");
 assert.equal(mapApp.mapStatus(), "cancelled");
+
+const lifecycleStorage = createStorage();
+const requester = setup(lifecycleStorage);
+requester.click("#request-button");
+const pendingRequest = requester.store.getRequest();
+assert.equal(pendingRequest.status, "pending");
+requester.runReceipt();
+assert.equal(requester.store.acceptRequest(pendingRequest.id).status, "accepted");
+assert.equal(requester.store.acceptRequest(pendingRequest.id), null);
+requester.dispatchStorage();
+assert.equal(requester.title(), "A volunteer is on the way");
+assert.equal(requester.elements.get("#cancel-button").hidden, false);
+
+const refreshedRequester = setup(lifecycleStorage);
+assert.equal(refreshedRequester.title(), "A volunteer is on the way");
+assert.equal(refreshedRequester.mapStatus(), "received");
+
+const cancelledRequester = setup();
+cancelledRequester.click("#request-button");
+const cancelledRequest = cancelledRequester.store.getRequest();
+cancelledRequester.click("#cancel-button");
+assert.equal(cancelledRequester.store.getRequest().status, "cancelled");
+assert.equal(cancelledRequester.store.acceptRequest(cancelledRequest.id), null);
+assert.equal(setup(cancelledRequester.storage).title(), "Request cancelled");
 
 const toggle = mapApp.elements.get("#sound-toggle");
 const toggleLabel = mapApp.elements.get("#sound-toggle-label");
