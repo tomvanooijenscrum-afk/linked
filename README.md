@@ -29,8 +29,9 @@ beschikbaar maken.
 Verzending en ontvangst worden alleen in dezelfde pagina gesimuleerd.
 Er is geen backend, echte ontvanger of hulp onderweg. Annulering stopt
 het lokale verzoek en de wachtende ontvangstsimulatie. Deze demo verwerkt
-geen locatie of persoonsgegevens en bewaart geen verzoeken. Vernieuwen
-of sluiten eindigt de lokale demo; andere tabbladen zijn aparte sessies.
+geen locatie of persoonsgegevens. Het demoverzoek en de beschikbaarheid
+worden lokaal in de browser opgeslagen. Vernieuwen behoudt deze gegevens;
+andere tabbladen kunnen wijzigingen volgen.
 
 ## Kaart en geluid (branch `feature/map-and-sound`)
 
@@ -42,12 +43,44 @@ of sluiten eindigt de lokale demo; andere tabbladen zijn aparte sessies.
   geluid uit; die keuze wordt niet opgeslagen.
 - Met "minder beweging" in het besturingssysteem staat de kaart stil.
 
+## Beschikbaarheid vrijwilliger (user story 8)
+
+Op `volunteer.html` staat boven de inbox de schakelaar **Your availability**.
+De status wordt opgeslagen onder `linked.volunteer-availability.v1` en is
+standaard **Available**. De keuze blijft na vernieuwen bewaard.
+
+Bij **Available** verschijnen nieuwe hulpverzoeken in de inbox en kan de
+vrijwilliger een verzoek openen en accepteren. Bij **Unavailable** worden
+nieuwe verzoeken verborgen en kan een verzoek niet worden geaccepteerd.
+Een wachtend verzoek blijft wel opgeslagen en verschijnt opnieuw wanneer de
+vrijwilliger weer **Available** kiest. Een al geaccepteerd verzoek blijft
+zichtbaar, ook als de vrijwilliger daarna **Unavailable** kiest.
+
+De status is zowel met tekst als vorm en kleur herkenbaar: **Available** heeft
+een cirkel, **Unavailable** een vierkant. De schakelaar is met het toetsenbord
+te bedienen.
+
+### Testresultaten
+
+| # | Controle | Criterium | Automatisch | Handmatig |
+|---|---|---|---|---|
+| 1 | Status zichtbaar en standaard Available | 1, 5, 6 | Geslaagd | In te vullen |
+| 2 | Schakelaar werkt in beide richtingen | 2 | Geslaagd | In te vullen |
+| 3 | Beschikbaar: verzoek verschijnt | 3 | Geslaagd | In te vullen |
+| 4 | Onbeschikbaar: verzoek verborgen en accepteren geblokkeerd | 4 | Geslaagd | In te vullen |
+| 5 | Status blijft na vernieuwen behouden | 5 | Geslaagd | In te vullen |
+| 6 | Terug naar Available toont het bewaarde verzoek | 3 | Geslaagd | In te vullen |
+| 7 | Tweede tabblad volgt de status | 5 | Geslaagd | In te vullen |
+| 8 | Ongeldige waarde valt terug op Available | 1 | Geslaagd | In te vullen |
+| 9 | Toetsenbord (Tab, Spatie/Enter) en scherm van 320 px | 2, 6 | Geslaagd | In te vullen |
+
 ## Geautomatiseerde controle
 
 Met Node.js geïnstalleerd:
 
 ```powershell
 node app.test.cjs
+node volunteer.test.cjs
 node --check app.js
 ```
 

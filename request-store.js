@@ -1,6 +1,29 @@
 ((global) => {
   const storageKey = "linked.help-request.v1";
+  const availabilityKey = "linked.volunteer-availability.v1";
   const validStatuses = new Set(["pending", "accepted", "cancelled"]);
+  const validAvailability = new Set(["available", "unavailable"]);
+
+  function getAvailability() {
+    let status;
+    try {
+      status = global.localStorage.getItem(availabilityKey);
+    } catch (error) {
+      console.error("Could not read the saved volunteer availability.", error);
+      return "available";
+    }
+
+    return validAvailability.has(status) ? status : "available";
+  }
+
+  function setAvailability(status) {
+    if (!validAvailability.has(status)) {
+      return null;
+    }
+
+    global.localStorage.setItem(availabilityKey, status);
+    return status;
+  }
 
   function isValidRequest(request) {
     return (
@@ -82,9 +105,12 @@
 
   global.LinkedRequestStore = Object.freeze({
     storageKey,
+    availabilityKey,
     getRequest,
     createRequest,
     acceptRequest,
     cancelRequest,
+    getAvailability,
+    setAvailability,
   });
 })(globalThis);
