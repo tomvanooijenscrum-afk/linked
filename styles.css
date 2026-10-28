@@ -48,10 +48,12 @@ header {
   display: flex;
   align-items: center;
   gap: 9px;
+  color: inherit;
   font-family: "Manrope", "Segoe UI", sans-serif;
   font-size: 35px;
   font-weight: 800;
   letter-spacing: -2px;
+  text-decoration: none;
 }
 
 .brand b {
@@ -352,6 +354,47 @@ h2 {
   color: var(--green);
 }
 
+nav[aria-label="Other views"] {
+  margin-top: 20px;
+}
+
+.volunteer-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 52px;
+  border: 1px solid var(--green);
+  border-radius: 12px;
+  padding: 14px 18px;
+  background: white;
+  color: var(--green);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.volunteer-link span {
+  color: #769a40;
+  font-size: 18px;
+  transition: transform 160ms ease;
+}
+
+.volunteer-link:hover {
+  transform: translateY(-2px);
+  background: var(--green);
+  color: white;
+}
+
+.volunteer-link:hover span {
+  color: white;
+  transform: translate(2px, -2px);
+}
+
 [hidden] {
   display: none !important;
 }
@@ -396,4 +439,11 @@ h2 {
     padding: 22px;
   }
 
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .volunteer-link,
+  .volunteer-link span {
+    transition: none;
+  }
 }

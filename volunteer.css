@@ -53,10 +53,12 @@ header {
   display: flex;
   align-items: center;
   gap: 9px;
+  color: inherit;
   font-family: "Manrope", "Segoe UI", sans-serif;
   font-size: 35px;
   font-weight: 800;
   letter-spacing: -2px;
+  text-decoration: none;
 }
 
 .brand b {
