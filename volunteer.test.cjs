@@ -34,9 +34,14 @@ function loadStore(storage) {
 function setup(storage = createStorage()) {
   const selectors = [
     "#inbox-status",
+    "#availability-card",
+    "#availability-toggle",
+    "#availability-value",
+    "#availability-hint",
     "#pending-request",
     "#accepted-request",
     "#empty-state",
+    "#unavailable-state",
     "#request-received",
     "#open-request",
     "#request-details",
@@ -53,9 +58,11 @@ function setup(storage = createStorage()) {
         "#pending-request",
         "#accepted-request",
         "#request-details",
+        "#unavailable-state",
       ].includes(selector),
       disabled: false,
       focused: false,
+      dataset: {},
       attributes: {},
       listeners: {},
       setAttribute(name, value) {
@@ -92,9 +99,9 @@ function setup(storage = createStorage()) {
     click(selector) {
       elements.get(selector).listeners.click();
     },
-    dispatchStorage() {
+    dispatchStorage(key = context.LinkedRequestStore.storageKey) {
       globalListeners.storage({
-        key: context.LinkedRequestStore.storageKey,
+        key,
       });
     },
   };
@@ -173,4 +180,138 @@ assert.equal(waitingInbox.elements.get("#pending-request").hidden, true);
 console.log(
   "Passed: empty inbox, pending request, open details, accept once, " +
     "accepted refresh, cancelled request rejection, and cross-tab updates.",
+);
+
+const defaultAvailability = setup();
+assert.equal(
+  defaultAvailability.elements.get("#availability-card").dataset.state,
+  "available",
+);
+assert.equal(
+  defaultAvailability.elements.get("#availability-value").textContent,
+  "Available",
+);
+assert.equal(
+  defaultAvailability.elements.get("#availability-toggle").attributes[
+    "aria-checked"
+  ],
+  "true",
+);
+
+const availabilityStorage = createStorage();
+const availabilityStore = loadStore(availabilityStorage);
+const pendingRequest = availabilityStore.createRequest();
+const availableInbox = setup(availabilityStorage);
+assert.equal(availableInbox.elements.get("#pending-request").hidden, false);
+assert.equal(availableInbox.elements.get("#unavailable-state").hidden, true);
+assert.equal(availableInbox.store.getRequest().id, pendingRequest.id);
+
+availableInbox.click("#availability-toggle");
+assert.equal(availableInbox.store.getAvailability(), "unavailable");
+assert.equal(
+  availableInbox.elements.get("#availability-card").dataset.state,
+  "unavailable",
+);
+assert.equal(
+  availableInbox.elements.get("#availability-value").textContent,
+  "Unavailable",
+);
+assert.equal(
+  availableInbox.elements.get("#availability-toggle").attributes[
+    "aria-checked"
+  ],
+  "false",
+);
+assert.equal(availableInbox.elements.get("#pending-request").hidden, true);
+assert.equal(availableInbox.elements.get("#empty-state").hidden, true);
+assert.equal(availableInbox.elements.get("#unavailable-state").hidden, false);
+assert.equal(availableInbox.elements.get("#accept-request").disabled, true);
+assert.match(
+  availableInbox.elements.get("#inbox-status").textContent,
+  /unavailable/i,
+);
+
+const unavailableStorage = createStorage();
+const unavailableStore = loadStore(unavailableStorage);
+unavailableStore.setAvailability("unavailable");
+const unavailableInbox = setup(unavailableStorage);
+const hiddenRequest = unavailableStore.createRequest();
+unavailableInbox.dispatchStorage();
+assert.equal(unavailableInbox.elements.get("#pending-request").hidden, true);
+assert.equal(unavailableInbox.elements.get("#unavailable-state").hidden, false);
+
+const refreshedUnavailableInbox = setup(unavailableStorage);
+assert.equal(
+  refreshedUnavailableInbox.store.getAvailability(),
+  "unavailable",
+);
+assert.equal(
+  refreshedUnavailableInbox.elements.get("#pending-request").hidden,
+  true,
+);
+assert.equal(
+  refreshedUnavailableInbox.store.getRequest().id,
+  hiddenRequest.id,
+);
+
+unavailableInbox.click("#accept-request");
+assert.equal(unavailableStore.getRequest().status, "pending");
+
+unavailableInbox.click("#availability-toggle");
+assert.equal(unavailableStore.getAvailability(), "available");
+assert.equal(unavailableInbox.elements.get("#pending-request").hidden, false);
+assert.equal(unavailableInbox.elements.get("#unavailable-state").hidden, true);
+assert.equal(
+  unavailableInbox.store.getRequest().status,
+  "pending",
+);
+
+const acceptedAvailabilityStorage = createStorage();
+const acceptedAvailabilityStore = loadStore(acceptedAvailabilityStorage);
+const acceptedForUnavailable = acceptedAvailabilityStore.createRequest();
+acceptedAvailabilityStore.acceptRequest(acceptedForUnavailable.id);
+const acceptedUnavailableInbox = setup(acceptedAvailabilityStorage);
+acceptedUnavailableInbox.click("#availability-toggle");
+assert.equal(
+  acceptedUnavailableInbox.elements.get("#accepted-request").hidden,
+  false,
+);
+assert.equal(
+  acceptedUnavailableInbox.elements.get("#unavailable-state").hidden,
+  true,
+);
+assert.match(
+  acceptedUnavailableInbox.elements.get("#inbox-status").textContent,
+  /accepted/i,
+);
+
+const crossTabAvailabilityStorage = createStorage();
+const crossTabAvailabilityStore = loadStore(crossTabAvailabilityStorage);
+const crossTabAvailabilityInbox = setup(crossTabAvailabilityStorage);
+crossTabAvailabilityStore.setAvailability("unavailable");
+crossTabAvailabilityInbox.dispatchStorage(
+  crossTabAvailabilityInbox.store.availabilityKey,
+);
+assert.equal(
+  crossTabAvailabilityInbox.elements.get("#availability-card").dataset.state,
+  "unavailable",
+);
+assert.equal(
+  crossTabAvailabilityInbox.elements.get("#availability-value").textContent,
+  "Unavailable",
+);
+
+const invalidAvailabilityStorage = createStorage();
+invalidAvailabilityStorage.setItem(
+  "linked.volunteer-availability.v1",
+  "banana",
+);
+const invalidAvailabilityStore = loadStore(invalidAvailabilityStorage);
+assert.equal(invalidAvailabilityStore.getAvailability(), "available");
+assert.equal(invalidAvailabilityStore.setAvailability("banana"), null);
+
+console.log(
+  "Passed (story 8): availability default, inbox visibility, toggle, " +
+    "persistence, hidden-request retention, acceptance guard, accepted " +
+    "request visibility, cross-tab update, and invalid-value fallback.",
 );

@@ -1,7 +1,12 @@
 const inboxStatus = document.querySelector("#inbox-status");
+const availabilityCard = document.querySelector("#availability-card");
+const availabilityToggle = document.querySelector("#availability-toggle");
+const availabilityValue = document.querySelector("#availability-value");
+const availabilityHint = document.querySelector("#availability-hint");
 const pendingRequestCard = document.querySelector("#pending-request");
 const acceptedRequestCard = document.querySelector("#accepted-request");
 const emptyState = document.querySelector("#empty-state");
+const unavailableState = document.querySelector("#unavailable-state");
 const requestReceived = document.querySelector("#request-received");
 const openRequestButton = document.querySelector("#open-request");
 const requestDetails = document.querySelector("#request-details");
@@ -19,28 +24,51 @@ function formatReceivedTime(timestamp) {
 
 function render() {
   currentRequest = requestStore.getRequest();
+  const isAvailable = requestStore.getAvailability() === "available";
   const isPending = currentRequest?.status === "pending";
   const isAccepted = currentRequest?.status === "accepted";
+  // Een wachtend verzoek blijft bewaard, maar is alleen zichtbaar
+  // als de vrijwilliger beschikbaar is.
+  const showPending = isPending && isAvailable;
 
-  pendingRequestCard.hidden = !isPending;
+  availabilityCard.dataset.state = isAvailable ? "available" : "unavailable";
+  availabilityToggle.setAttribute("aria-checked", String(isAvailable));
+  availabilityValue.textContent = isAvailable ? "Available" : "Unavailable";
+  availabilityHint.textContent = isAvailable
+    ? "New requests appear in your inbox."
+    : "New requests are paused and not shown in your inbox.";
+  pendingRequestCard.hidden = !showPending;
   acceptedRequestCard.hidden = !isAccepted;
-  emptyState.hidden = isPending || isAccepted;
+  unavailableState.hidden = isAvailable || isAccepted;
+  emptyState.hidden = !isAvailable || isPending || isAccepted;
 
-  if (isPending) {
+  if (showPending) {
     inboxStatus.textContent = "A new request is waiting for a volunteer.";
     requestReceived.textContent =
       `Received ${formatReceivedTime(currentRequest.createdAt)}`;
   } else if (isAccepted) {
     inboxStatus.textContent = "This request has been accepted.";
+  } else if (!isAvailable) {
+    inboxStatus.textContent =
+      "You are unavailable. New requests are not shown.";
   } else {
     inboxStatus.textContent = "No pending requests right now.";
   }
 
-  if (!isPending) {
+  if (!showPending) {
     requestDetails.hidden = true;
     openRequestButton.setAttribute("aria-expanded", "false");
   }
-  acceptRequestButton.disabled = !isPending;
+  acceptRequestButton.disabled = !showPending;
+}
+
+function toggleAvailability() {
+  const nextStatus =
+    requestStore.getAvailability() === "available"
+      ? "unavailable"
+      : "available";
+  requestStore.setAvailability(nextStatus);
+  render();
 }
 
 function toggleRequestDetails() {
@@ -55,7 +83,11 @@ function toggleRequestDetails() {
 }
 
 function acceptRequest() {
-  if (!currentRequest || currentRequest.status !== "pending") {
+  if (
+    requestStore.getAvailability() !== "available" ||
+    !currentRequest ||
+    currentRequest.status !== "pending"
+  ) {
     render();
     return;
   }
@@ -72,11 +104,15 @@ function acceptRequest() {
 }
 
 globalThis.addEventListener("storage", (event) => {
-  if (event.key === requestStore.storageKey) {
+  if (
+    event.key === requestStore.storageKey ||
+    event.key === requestStore.availabilityKey
+  ) {
     render();
   }
 });
 
 openRequestButton.addEventListener("click", toggleRequestDetails);
 acceptRequestButton.addEventListener("click", acceptRequest);
+availabilityToggle.addEventListener("click", toggleAvailability);
 render();

@@ -25,6 +25,44 @@
         <p>Review a request and accept it when you’re ready to help.</p>
       </section>
 
+      <section
+        id="availability-card"
+        class="availability-card"
+        data-state="available"
+        aria-labelledby="availability-title"
+      >
+        <div class="availability-text">
+          <span
+            id="availability-title"
+            class="availability-title"
+          >
+            Your availability
+          </span>
+          <p
+            id="availability-label"
+            class="availability-label"
+          >
+            <span class="availability-mark" aria-hidden="true"></span>
+            <span id="availability-value">Available</span>
+          </p>
+          <p
+            id="availability-hint"
+            class="availability-hint"
+            role="status"
+          >
+            New requests appear in your inbox.
+          </p>
+        </div>
+        <button
+          id="availability-toggle"
+          class="availability-switch"
+          type="button"
+          role="switch"
+          aria-checked="true"
+          aria-label="Available for new requests"
+        ></button>
+      </section>
+
       <section class="inbox-card" aria-labelledby="inbox-title">
         <div class="card-top">
           <span class="eyebrow">HELP REQUESTS</span>
@@ -74,6 +112,18 @@
             The requester has been notified that a volunteer is on the way.
           </p>
         </article>
+
+        <div
+          id="unavailable-state"
+          class="empty-state unavailable-state"
+          hidden
+        >
+          <span class="empty-mark" aria-hidden="true">⏸</span>
+          <p>
+            You are unavailable, so new requests are not shown. Switch to
+            Available to see them.
+          </p>
+        </div>
 
         <div id="empty-state" class="empty-state">
           <span class="empty-mark" aria-hidden="true">↗</span>
