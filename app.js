@@ -1,6 +1,7 @@
 const requestButton = document.querySelector("#request-button");
 const requestButtonLabel = document.querySelector("#request-button-label");
 const cancelButton = document.querySelector("#cancel-button");
+const requestStatusPanel = document.querySelector("#request-status");
 const statusTitle = document.querySelector("#status-title");
 const statusDescription = document.querySelector("#status-description");
 const requestMap = document.querySelector("#request-map");
@@ -172,6 +173,8 @@ function render() {
   const active = isRequestActive();
   const message = statusMessages[requestStatus];
 
+  requestStatusPanel.hidden = requestStatus === "idle";
+  requestMap.hidden = !active;
   statusTitle.textContent = message.title;
   statusDescription.textContent = message.description;
   requestButton.hidden = active;
