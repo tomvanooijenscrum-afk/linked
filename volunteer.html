@@ -5,8 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#183e37" />
     <title>Linked | Volunteer inbox</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
     <link rel="stylesheet" href="volunteer.css" />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      defer
+    ></script>
     <script src="request-store.js" defer></script>
+    <script src="approximate-map.js" defer></script>
     <script src="volunteer.js" defer></script>
   </head>
   <body>
@@ -92,8 +101,8 @@
           <div id="request-details" class="request-details" hidden>
             <h4>Request details</h4>
             <p>
-              The requester has asked for help. No additional details or real
-              location are included in this demo.
+              The requester has asked for help. Any shared approximate
+              location is shown after you accept this request.
             </p>
             <button id="accept-request" class="primary" type="button">
               Accept request
@@ -110,6 +119,20 @@
           <h3>You accepted this request</h3>
           <p>
             The requester has been notified that a volunteer is on the way.
+          </p>
+          <div id="accepted-location" class="accepted-location" hidden>
+            <div
+              id="accepted-location-map"
+              class="location-map"
+              role="img"
+              aria-label="Map showing the requester’s approximate area"
+            ></div>
+            <p class="location-label">
+              <span id="accepted-location-label"></span>
+            </p>
+          </div>
+          <p id="accepted-no-location" class="accepted-location" hidden>
+            No location shared.
           </p>
         </article>
 
@@ -131,8 +154,9 @@
         </div>
 
         <p class="demo-note">
-          Demo only. This inbox does not send a real request or share a real
-          location.
+          Demo only. This inbox does not send a real request or dispatch help.
+          Approximate location appears here only after acceptance;
+          local browser storage is not secure access control.
         </p>
       </section>
     </main>

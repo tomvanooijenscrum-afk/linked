@@ -8,6 +8,10 @@ const storeSource = fs.readFileSync(
   path.join(__dirname, "request-store.js"),
   "utf8",
 );
+const approximateMapSource = fs.readFileSync(
+  path.join(__dirname, "approximate-map.js"),
+  "utf8",
+);
 const html = fs.readFileSync(
   path.join(__dirname, "volunteer.html"),
   "utf8",
@@ -21,6 +25,59 @@ function createStorage() {
     },
     setItem(key, value) {
       values.set(key, value);
+    },
+  };
+}
+
+function createLeaflet() {
+  const maps = [];
+  return {
+    maps,
+    map(element, options) {
+      const instance = {
+        element,
+        options,
+        fittedBounds: null,
+        setView(center, zoom) {
+          this.initialView = { center, zoom };
+        },
+        invalidateSize() {},
+        fitBounds(bounds, fitOptions) {
+          this.fittedBounds = { bounds, options: fitOptions };
+        },
+        remove() {},
+      };
+      maps.push(instance);
+      return instance;
+    },
+    tileLayer(url, options) {
+      return {
+        url,
+        options,
+        addTo(map) {
+          map.tileLayer = this;
+        },
+      };
+    },
+    circle(center, options) {
+      return {
+        center,
+        radius: options.radius,
+        options,
+        addTo(map) {
+          map.circle = this;
+          return this;
+        },
+        getBounds() {
+          return { center: this.center, radius: this.radius };
+        },
+        setLatLng(nextCenter) {
+          this.center = nextCenter;
+        },
+        setRadius(radius) {
+          this.radius = radius;
+        },
+      };
     },
   };
 }
@@ -46,6 +103,10 @@ function setup(storage = createStorage()) {
     "#open-request",
     "#request-details",
     "#accept-request",
+    "#accepted-location",
+    "#accepted-location-map",
+    "#accepted-location-label",
+    "#accepted-no-location",
   ];
   const elements = new Map();
   const globalListeners = {};
@@ -58,15 +119,27 @@ function setup(storage = createStorage()) {
         "#pending-request",
         "#accepted-request",
         "#request-details",
+        "#accepted-location",
+        "#accepted-no-location",
         "#unavailable-state",
       ].includes(selector),
       disabled: false,
       focused: false,
       dataset: {},
       attributes: {},
+      src: "",
       listeners: {},
+      replaceChildren() {
+        this.textContent = "";
+      },
       setAttribute(name, value) {
         this.attributes[name] = value;
+      },
+      removeAttribute(name) {
+        delete this.attributes[name];
+        if (name === "src") {
+          this.src = "";
+        }
       },
       addEventListener(name, callback) {
         this.listeners[name] = callback;
@@ -77,8 +150,10 @@ function setup(storage = createStorage()) {
     });
   }
 
+  const leaflet = createLeaflet();
   const context = vm.createContext({
     localStorage: storage,
+    L: leaflet,
     addEventListener(name, callback) {
       globalListeners[name] = callback;
     },
@@ -90,10 +165,12 @@ function setup(storage = createStorage()) {
     },
   });
   vm.runInContext(storeSource, context);
+  vm.runInContext(approximateMapSource, context);
   vm.runInContext(source, context);
 
   return {
     elements,
+    leaflet,
     storage,
     store: context.LinkedRequestStore,
     click(selector) {
@@ -119,6 +196,15 @@ assert.equal(
 const sharedStorage = createStorage();
 const requesterStore = loadStore(sharedStorage);
 const request = requesterStore.createRequest();
+requesterStore.setApproximateLocation(request.id, {
+  latitude: 52.123456,
+  longitude: 5.987654,
+  accuracy: 70,
+});
+requesterStore.setApproximateLocationLabel(
+  request.id,
+  "Near Market Street, Centrum, Eindhoven",
+);
 const inbox = setup(sharedStorage);
 assert.equal(inbox.elements.get("#pending-request").hidden, false);
 assert.equal(inbox.elements.get("#empty-state").hidden, true);
@@ -129,6 +215,26 @@ assert.match(
 
 inbox.click("#open-request");
 assert.equal(inbox.elements.get("#request-details").hidden, false);
+assert.equal(inbox.elements.get("#accepted-request").hidden, true);
+assert.equal(
+  inbox.elements.get("#accepted-location").hidden,
+  true,
+);
+assert.equal(
+  inbox.leaflet.maps.length,
+  0,
+);
+assert.equal(
+  inbox.elements.get("#accepted-location-label").textContent,
+  "",
+);
+assert.equal(
+  inbox.elements.get("#accepted-no-location").hidden,
+  true,
+);
+assert.ok(
+  !inbox.elements.get("#accepted-location-map").src.includes("52.12"),
+);
 assert.equal(inbox.elements.get("#accept-request").focused, true);
 assert.equal(
   inbox.elements.get("#open-request").attributes["aria-expanded"],
@@ -141,6 +247,27 @@ assert.equal(acceptedRequest.status, "accepted");
 assert.ok(Number.isFinite(acceptedRequest.acceptedAt));
 assert.equal(inbox.elements.get("#pending-request").hidden, true);
 assert.equal(inbox.elements.get("#accepted-request").hidden, false);
+assert.equal(
+  inbox.elements.get("#accepted-location-label").textContent,
+  "Near Market Street, Centrum, Eindhoven",
+);
+assert.ok(
+  !inbox.elements.get("#accepted-location-label").textContent.includes(
+    "52.12",
+  ),
+);
+assert.equal(inbox.leaflet.maps.length, 1);
+assert.deepEqual(
+  Array.from(inbox.leaflet.maps[0].circle.center),
+  [52.12, 5.99],
+);
+assert.equal(inbox.leaflet.maps[0].circle.radius, 750);
+assert.equal(inbox.leaflet.maps[0].fittedBounds.bounds.radius, 750);
+assert.match(
+  inbox.leaflet.maps[0].tileLayer.options.attribution,
+  /OpenStreetMap contributors/,
+);
+assert.equal(inbox.elements.get("#accepted-no-location").hidden, true);
 assert.match(
   inbox.elements.get("#inbox-status").textContent,
   /accepted/,
@@ -276,6 +403,15 @@ assert.equal(
   acceptedUnavailableInbox.elements.get("#accepted-request").hidden,
   false,
 );
+assert.equal(
+  acceptedUnavailableInbox.elements.get("#accepted-no-location").hidden,
+  false,
+);
+assert.equal(
+  acceptedUnavailableInbox.elements.get("#accepted-no-location").textContent,
+  "No location shared.",
+);
+assert.equal(acceptedUnavailableInbox.leaflet.maps.length, 0);
 assert.equal(
   acceptedUnavailableInbox.elements.get("#unavailable-state").hidden,
   true,
