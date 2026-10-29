@@ -28,6 +28,7 @@ function setup(storage = createStorage()) {
     "#request-button",
     "#request-button-label",
     "#cancel-button",
+    "#request-status",
     "#status-title",
     "#status-description",
     "#request-map",
@@ -117,8 +118,12 @@ assert.equal(app.title(), "No active request");
 assert.equal(app.elements.get("#request-button").hidden, false);
 assert.equal(app.elements.get("#cancel-button").hidden, true);
 assert.equal(app.timers.size, 0);
+assert.equal(app.elements.get("#request-status").hidden, true);
+assert.equal(app.elements.get("#request-map").hidden, true);
 app.click("#request-button");
 assert.equal(app.title(), "Request sent (demo)");
+assert.equal(app.elements.get("#request-status").hidden, false);
+assert.equal(app.elements.get("#request-map").hidden, false);
 assert.equal(app.elements.get("#request-button").disabled, true);
 assert.equal(app.elements.get("#cancel-button").hidden, false);
 assert.equal(app.elements.get("#cancel-button").focused, true);
