@@ -5,8 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#183e37" />
     <title>Linked | Volunteer inbox</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
     <link rel="stylesheet" href="volunteer.css" />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      defer
+    ></script>
     <script src="request-store.js" defer></script>
+    <script src="tap-request-store.js" defer></script>
+    <script src="request-map.js" defer></script>
     <script src="volunteer.js" defer></script>
   </head>
   <body>
@@ -15,7 +25,10 @@
         <b aria-hidden="true">↗</b>
         linked<span>.</span>
       </span>
-      <a class="back-link" href="index.html">Requester view</a>
+      <nav class="header-links" aria-label="Pages">
+        <a class="back-link" href="wristbands.html">Wristbands</a>
+        <a class="back-link" href="index.html">Requester view</a>
+      </nav>
     </header>
 
     <main>
@@ -61,6 +74,82 @@
           aria-checked="true"
           aria-label="Available for new requests"
         ></button>
+      </section>
+
+      <section
+        id="tap-alert"
+        class="tap-alert"
+        role="alert"
+        hidden
+      >
+        <span class="tap-alert-mark" aria-hidden="true">!</span>
+        <div class="tap-alert-text">
+          <strong>Someone needs help</strong>
+          <p id="tap-alert-text"></p>
+        </div>
+        <button
+          id="dismiss-tap-alert"
+          class="tap-alert-dismiss"
+          type="button"
+          aria-label="Dismiss notification"
+        >
+          ×
+        </button>
+      </section>
+
+      <section
+        class="inbox-card nearby-card"
+        aria-labelledby="nearby-title"
+      >
+        <div class="card-top">
+          <span class="eyebrow">WRISTBAND REQUESTS</span>
+          <span class="inbox-badge">SIMULATED</span>
+        </div>
+        <h2 id="nearby-title">Requests near you</h2>
+        <p
+          id="nearby-status"
+          class="inbox-status"
+          tabindex="-1"
+          role="status"
+          aria-live="polite"
+        >
+          No wristband requests yet.
+        </p>
+        <div
+          id="requests-map"
+          class="requests-map"
+          role="img"
+          aria-label="Map of your demo position and nearby wristband requests. The list below shows the same requests."
+        ></div>
+        <ul class="map-legend" aria-hidden="true">
+          <li><span class="legend-dot legend-you"></span>You</li>
+          <li><span class="legend-dot legend-closest"></span>Closest</li>
+          <li><span class="legend-dot legend-pending"></span>Waiting</li>
+          <li><span class="legend-dot legend-accepted"></span>Accepted</li>
+        </ul>
+        <ol
+          id="tap-request-list"
+          class="tap-request-list"
+          aria-label="Wristband requests, closest first"
+        ></ol>
+        <p
+          id="reader-status"
+          class="reader-status"
+        >
+          Wristband reader: checking…
+        </p>
+        <button
+          id="clear-tap-requests"
+          class="secondary"
+          type="button"
+        >
+          Clear wristband requests
+        </button>
+        <p class="demo-note">
+          Demo only. All positions are hypothetical points near Fontys
+          Rachelsmolen, chosen at random for each tap. No real location is
+          used.
+        </p>
       </section>
 
       <section class="inbox-card" aria-labelledby="inbox-title">

@@ -1,0 +1,101 @@
+.inbox-card + .inbox-card {
+  margin-top: 20px;
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.base-url-form {
+  margin-top: 16px;
+}
+
+.base-url-form label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.base-url-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.base-url-row input {
+  flex: 1;
+  min-width: 0;
+  min-height: 56px;
+  margin-top: 8px;
+  border: 1px solid #9cae91;
+  border-radius: 10px;
+  padding: 0 16px;
+  color: var(--green);
+  font: inherit;
+}
+
+.base-url-row input:focus-visible {
+  outline: 3px solid #769a40;
+  outline-offset: 2px;
+}
+
+.base-url-row .secondary {
+  width: auto;
+}
+
+.field-hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.wristband-url {
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, "SFMono-Regular", monospace;
+}
+
+.wristband-list {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wristband-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.wristband-item p {
+  margin: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.wristband-item .wristband-token {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.wristband-item .secondary {
+  width: auto;
+  min-height: 44px;
+  margin: 0;
+  padding: 10px 16px;
+}
+
+@media (max-width: 760px) {
+  .button-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .wristband-item {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
