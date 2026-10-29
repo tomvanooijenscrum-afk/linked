@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#183e37" />
+    <title>Linked | Wristbands</title>
+    <link rel="stylesheet" href="volunteer.css" />
+    <link rel="stylesheet" href="wristbands.css" />
+    <script src="wristband-store.js" defer></script>
+    <script src="wristbands.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <span class="brand" aria-label="Linked">
+        <b aria-hidden="true">↗</b>
+        linked<span>.</span>
+      </span>
+      <a class="back-link" href="volunteer.html">Volunteer inbox</a>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <span class="eyebrow">WRISTBAND MANAGEMENT</span>
+        <h1 id="page-title">Program a wristband, <em>tap to help.</em></h1>
+        <p>
+          Connect the NFC writer, register a wristband and write its Linked
+          link to a blank NTAG213 tag.
+        </p>
+      </section>
+
+      <section class="inbox-card" aria-labelledby="writer-title">
+        <div class="card-top">
+          <span class="eyebrow">NFC WRITER</span>
+          <span class="inbox-badge">LOCAL</span>
+        </div>
+        <h2 id="writer-title">Arduino writer</h2>
+        <p
+          id="bridge-status"
+          class="inbox-status"
+          role="status"
+          aria-live="polite"
+        >
+          Arduino not connected.
+        </p>
+        <div class="button-row">
+          <button
+            id="connect-arduino"
+            class="secondary"
+            type="button"
+          >
+            Connect Arduino
+          </button>
+          <button
+            id="scan-tag"
+            class="secondary"
+            type="button"
+          >
+            Scan NFC tag
+          </button>
+        </div>
+      </section>
+
+      <section class="inbox-card" aria-labelledby="register-title">
+        <div class="card-top">
+          <span class="eyebrow">NEW WRISTBAND</span>
+        </div>
+        <h2 id="register-title">Register and program</h2>
+
+        <form id="base-url-form" class="base-url-form">
+          <label for="base-url">Linked address (HTTPS)</label>
+          <div class="base-url-row">
+            <input
+              id="base-url"
+              type="url"
+              inputmode="url"
+              placeholder="https://your-domain.nl"
+              autocomplete="off"
+              aria-describedby="base-url-hint"
+              required
+            />
+            <button
+              id="save-base-url"
+              class="secondary"
+              type="submit"
+            >
+              Save
+            </button>
+          </div>
+          <p
+            id="base-url-hint"
+            class="field-hint"
+          >
+            Short HTTPS address of the requester page. The full wristband link
+            may be at most 40 characters after https://.
+          </p>
+        </form>
+
+        <button
+          id="register-wristband"
+          class="primary"
+          type="button"
+        >
+          Register wristband
+          <span aria-hidden="true">+</span>
+        </button>
+
+        <article
+          id="current-wristband"
+          class="request-card"
+          hidden
+        >
+          <div class="request-card-top">
+            <span
+              class="request-indicator"
+              aria-hidden="true"
+            ></span>
+            <span class="request-state">Pending</span>
+          </div>
+          <h3>Ready to program</h3>
+          <p>
+            Place a blank NTAG213 wristband on the reader, then program it.
+          </p>
+          <p
+            id="current-url"
+            class="wristband-url"
+          ></p>
+          <button
+            id="program-wristband"
+            class="primary"
+            type="button"
+          >
+            Program wristband
+            <span aria-hidden="true">↗</span>
+          </button>
+        </article>
+      </section>
+
+      <section class="inbox-card" aria-labelledby="list-title">
+        <div class="card-top">
+          <span class="eyebrow">REGISTERED</span>
+          <span class="inbox-badge">DEMO</span>
+        </div>
+        <h2 id="list-title">Wristbands</h2>
+        <ul
+          id="wristband-list"
+          class="wristband-list"
+        ></ul>
+        <div
+          id="wristband-empty"
+          class="empty-state"
+        >
+          <span class="empty-mark" aria-hidden="true">↗</span>
+          <p>No wristbands registered yet.</p>
+        </div>
+        <p class="demo-note">
+          Demo only. Wristbands are stored in this browser. Deactivating a
+          wristband here does not yet block its link on a phone.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
