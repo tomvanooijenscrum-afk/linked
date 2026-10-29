@@ -19,6 +19,10 @@ const tapAlert = document.querySelector("#tap-alert");
 const tapAlertText = document.querySelector("#tap-alert-text");
 const dismissTapAlertButton = document.querySelector("#dismiss-tap-alert");
 const readerStatus = document.querySelector("#reader-status");
+const acceptedLocation = document.querySelector("#accepted-location");
+const acceptedLocationMap = document.querySelector("#accepted-location-map");
+const acceptedLocationLabel = document.querySelector("#accepted-location-label");
+const acceptedNoLocation = document.querySelector("#accepted-no-location");
 const requestStore = globalThis.LinkedRequestStore;
 const tapRequestStore = globalThis.LinkedTapRequestStore;
 const requestMap = globalThis.LinkedRequestMap;
@@ -160,6 +164,8 @@ function render() {
   // Een wachtend verzoek blijft bewaard, maar is alleen zichtbaar
   // als de vrijwilliger beschikbaar is.
   const showPending = isPending && isAvailable;
+  const approximateLocation =
+    isAccepted && currentRequest.approximateLocation;
 
   availabilityCard.dataset.state = isAvailable ? "available" : "unavailable";
   availabilityToggle.setAttribute("aria-checked", String(isAvailable));
@@ -169,6 +175,21 @@ function render() {
     : "New requests are paused and not shown in your inbox.";
   pendingRequestCard.hidden = !showPending;
   acceptedRequestCard.hidden = !isAccepted;
+  // Locatie staat alleen in de kaart na acceptatie; localStorage is geen toegangscontrole.
+  acceptedLocation.hidden = !approximateLocation;
+  acceptedNoLocation.hidden = !isAccepted || Boolean(approximateLocation);
+  acceptedNoLocation.textContent = "No location shared.";
+  if (approximateLocation) {
+    globalThis.LinkedApproximateMap.update(
+      acceptedLocationMap,
+      approximateLocation,
+    );
+    acceptedLocationLabel.textContent =
+      approximateLocation.label || "Approximate location available";
+  } else {
+    globalThis.LinkedApproximateMap.update(acceptedLocationMap, null);
+    acceptedLocationLabel.textContent = "";
+  }
   unavailableState.hidden = isAvailable || isAccepted;
   emptyState.hidden = !isAvailable || isPending || isAccepted;
 

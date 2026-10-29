@@ -16,6 +16,10 @@ const mapSource = fs.readFileSync(
   path.join(__dirname, "request-map.js"),
   "utf8",
 );
+const approximateMapSource = fs.readFileSync(
+  path.join(__dirname, "approximate-map.js"),
+  "utf8",
+);
 const html = fs.readFileSync(
   path.join(__dirname, "volunteer.html"),
   "utf8",
@@ -49,6 +53,7 @@ function createElement() {
     disabled: false,
     focused: false,
     className: "",
+    src: "",
     dataset: {},
     attributes: {},
     listeners: {},
@@ -71,8 +76,60 @@ function createElement() {
   };
 }
 
-// Nep-Leaflet: onthoudt alleen de punten op de kaart.
 function createLeaflet() {
+  const maps = [];
+  return {
+    maps,
+    map(element, options) {
+      const instance = {
+        element,
+        options,
+        fittedBounds: null,
+        setView(center, zoom) {
+          this.initialView = { center, zoom };
+        },
+        invalidateSize() {},
+        fitBounds(bounds, fitOptions) {
+          this.fittedBounds = { bounds, options: fitOptions };
+        },
+        remove() {},
+      };
+      maps.push(instance);
+      return instance;
+    },
+    tileLayer(url, options) {
+      return {
+        url,
+        options,
+        addTo(map) {
+          map.tileLayer = this;
+        },
+      };
+    },
+    circle(center, options) {
+      return {
+        center,
+        radius: options.radius,
+        options,
+        addTo(map) {
+          map.circle = this;
+          return this;
+        },
+        getBounds() {
+          return { center: this.center, radius: this.radius };
+        },
+        setLatLng(nextCenter) {
+          this.center = nextCenter;
+        },
+        setRadius(radius) {
+          this.radius = radius;
+        },
+      };
+    },
+  };
+}
+
+function createNearbyLeaflet() {
   const markers = [];
   const chain = (target) => {
     target.addTo = () => target;
@@ -133,6 +190,10 @@ function setup(
   leaflet = undefined,
 ) {
   const selectors = [
+    "#accepted-location",
+    "#accepted-location-map",
+    "#accepted-location-label",
+    "#accepted-no-location",
     "#inbox-status",
     "#availability-card",
     "#availability-toggle",
@@ -171,6 +232,7 @@ function setup(
     elements.set(selector, element);
   }
 
+  const approximateLeaflet = createLeaflet();
   const bridge = createBridge(bridgeResponses);
   let pollTimer = null;
   const context = vm.createContext({
@@ -195,10 +257,15 @@ function setup(
   vm.runInContext(storeSource, context);
   vm.runInContext(tapStoreSource, context);
   vm.runInContext(mapSource, context);
+  const nearbyMap = context.LinkedRequestMap;
+  context.LinkedRequestMap = { update(...args) { const previous = context.L; context.L = leaflet; try { return nearbyMap.update(...args); } finally { context.L = previous; } } };
+  context.L = approximateLeaflet;
+  vm.runInContext(approximateMapSource, context);
   vm.runInContext(source, context);
 
   return {
     elements,
+    leaflet: approximateLeaflet,
     storage,
     store: context.LinkedRequestStore,
     tapStore: context.LinkedTapRequestStore,
@@ -232,6 +299,15 @@ assert.equal(
 const sharedStorage = createStorage();
 const requesterStore = loadStore(sharedStorage);
 const request = requesterStore.createRequest();
+requesterStore.setApproximateLocation(request.id, {
+  latitude: 52.123456,
+  longitude: 5.987654,
+  accuracy: 70,
+});
+requesterStore.setApproximateLocationLabel(
+  request.id,
+  "Near Market Street, Centrum, Eindhoven",
+);
 const inbox = setup(sharedStorage);
 assert.equal(inbox.elements.get("#pending-request").hidden, false);
 assert.equal(inbox.elements.get("#empty-state").hidden, true);
@@ -242,6 +318,26 @@ assert.match(
 
 inbox.click("#open-request");
 assert.equal(inbox.elements.get("#request-details").hidden, false);
+assert.equal(inbox.elements.get("#accepted-request").hidden, true);
+assert.equal(
+  inbox.elements.get("#accepted-location").hidden,
+  true,
+);
+assert.equal(
+  inbox.leaflet.maps.length,
+  0,
+);
+assert.equal(
+  inbox.elements.get("#accepted-location-label").textContent,
+  "",
+);
+assert.equal(
+  inbox.elements.get("#accepted-no-location").hidden,
+  true,
+);
+assert.ok(
+  !inbox.elements.get("#accepted-location-map").src.includes("52.12"),
+);
 assert.equal(inbox.elements.get("#accept-request").focused, true);
 assert.equal(
   inbox.elements.get("#open-request").attributes["aria-expanded"],
@@ -254,6 +350,27 @@ assert.equal(acceptedRequest.status, "accepted");
 assert.ok(Number.isFinite(acceptedRequest.acceptedAt));
 assert.equal(inbox.elements.get("#pending-request").hidden, true);
 assert.equal(inbox.elements.get("#accepted-request").hidden, false);
+assert.equal(
+  inbox.elements.get("#accepted-location-label").textContent,
+  "Near Market Street, Centrum, Eindhoven",
+);
+assert.ok(
+  !inbox.elements.get("#accepted-location-label").textContent.includes(
+    "52.12",
+  ),
+);
+assert.equal(inbox.leaflet.maps.length, 1);
+assert.deepEqual(
+  Array.from(inbox.leaflet.maps[0].circle.center),
+  [52.12, 5.99],
+);
+assert.equal(inbox.leaflet.maps[0].circle.radius, 750);
+assert.equal(inbox.leaflet.maps[0].fittedBounds.bounds.radius, 750);
+assert.match(
+  inbox.leaflet.maps[0].tileLayer.options.attribution,
+  /OpenStreetMap contributors/,
+);
+assert.equal(inbox.elements.get("#accepted-no-location").hidden, true);
 assert.match(
   inbox.elements.get("#inbox-status").textContent,
   /accepted/,
@@ -390,6 +507,15 @@ assert.equal(
   false,
 );
 assert.equal(
+  acceptedUnavailableInbox.elements.get("#accepted-no-location").hidden,
+  false,
+);
+assert.equal(
+  acceptedUnavailableInbox.elements.get("#accepted-no-location").textContent,
+  "No location shared.",
+);
+assert.equal(acceptedUnavailableInbox.leaflet.maps.length, 0);
+assert.equal(
   acceptedUnavailableInbox.elements.get("#unavailable-state").hidden,
   true,
 );
@@ -461,7 +587,7 @@ async function runTapTests() {
   }
 
   // Eerste vraag negeert oude tikken; elke volgende tik is een nieuw verzoek.
-  const leaflet = createLeaflet();
+  const leaflet = createNearbyLeaflet();
   const tapStorage = createStorage();
   const tapInbox = setup(
     tapStorage,

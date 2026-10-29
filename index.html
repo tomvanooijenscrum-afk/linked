@@ -7,9 +7,13 @@
       content="width=device-width, initial-scale=1.0"
     />
     <meta name="theme-color" content="#183e37" />
-    <title>Linked | Ask for help</title>
     <link rel="stylesheet" href="styles.css" />
+    <title>Linked | Ask for help</title>
+
     <script src="request-store.js" defer></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+    <script src="approximate-map.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -25,6 +29,55 @@
       <section class="help-card" aria-labelledby="page-title">
         <h1 id="page-title">Need help?</h1>
         <p class="help-instruction">Tap once to ask for help.</p>
+
+        <div class="location-option">
+          <label class="location-choice" for="share-location">
+            <input id="share-location" type="checkbox" />
+            <span>Share approximate location</span>
+            <span id="location-choice-state" class="location-choice-state">
+              OFF
+            </span>
+          </label>
+          <p id="location-help" class="location-help">
+            Optional. Approximate area shared after acceptance. Map services
+            receive rounded location data.
+          </p>
+          <p
+            id="location-feedback"
+            class="location-feedback"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            Location sharing is off.
+          </p>
+          <section
+            id="request-location-preview"
+            class="location-preview"
+            aria-label="Approximate location preview"
+            hidden
+          >
+            <div
+              id="request-location-map"
+              class="location-map"
+              role="img"
+              aria-label="Map showing the approximate request area"
+            ></div>
+            <p class="location-label">
+              <span id="request-location-label">
+                Approximate location available
+              </span>
+            </p>
+          </section>
+          <button
+            id="location-without-button"
+            class="secondary"
+            type="button"
+            hidden
+          >
+            Ask for help without location
+          </button>
+        </div>
 
         <button
           id="request-button"
@@ -58,51 +111,6 @@
           </p>
         </div>
 
-        <figure
-          id="request-map"
-          class="request-map"
-          hidden
-          data-status="idle"
-        >
-          <svg
-            viewBox="0 0 320 180"
-            role="img"
-            aria-labelledby="map-caption"
-          >
-            <g class="map-blocks">
-              <rect x="12" y="12" width="70" height="48" rx="6" />
-              <rect x="96" y="12" width="88" height="48" rx="6" />
-              <rect x="198" y="12" width="110" height="30" rx="6" />
-              <rect x="12" y="74" width="70" height="94" rx="6" />
-              <rect x="198" y="56" width="50" height="56" rx="6" />
-              <rect x="262" y="56" width="46" height="112" rx="6" />
-              <rect x="96" y="120" width="152" height="48" rx="6" />
-            </g>
-            <path
-              class="map-park"
-              d="M100 74 h40 a8 8 0 0 1 8 8 v24 a8 8 0 0 1 -8 8 h-40
-                 a4 4 0 0 1 -4 -4 v-32 a4 4 0 0 1 4 -4 z"
-            />
-            <g class="map-links">
-              <line x1="172" y1="90" x2="47" y2="36" />
-              <line x1="172" y1="90" x2="285" y2="28" />
-              <line x1="172" y1="90" x2="223" y2="145" />
-            </g>
-            <g class="map-helpers">
-              <circle cx="47" cy="36" r="7" />
-              <circle cx="285" cy="28" r="7" />
-              <circle cx="223" cy="145" r="7" />
-            </g>
-            <g class="map-pulses">
-              <circle cx="172" cy="90" r="10" />
-              <circle cx="172" cy="90" r="10" />
-            </g>
-            <circle class="map-you" cx="172" cy="90" r="9" />
-          </svg>
-          <figcaption id="map-caption">
-            Illustration only. Not your real location.
-          </figcaption>
-        </figure>
 
         <p id="demo-notice" class="demo-note">
           Demo only. No real request is sent. In an emergency, call

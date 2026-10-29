@@ -196,3 +196,88 @@ summary { min-height: 48px; padding: 12px 4px; cursor: pointer; }
     transform: scale(2.5);
   }
 }
+
+.location-option {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fcfdfb;
+}
+
+.location-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.location-choice input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--green);
+}
+
+.location-choice input:disabled {
+  cursor: not-allowed;
+}
+
+.location-choice-state {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+}
+
+.location-help,
+.location-feedback {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.location-feedback {
+  color: var(--green);
+}
+
+.location-preview {
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: white;
+}
+
+.location-map {
+  display: block;
+  width: calc(100% + 20px);
+  max-width: none;
+  min-height: 140px;
+  margin: -10px -10px 0;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #eef2e8;
+}
+
+.location-map[data-map-state="unavailable"] {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.leaflet-control-attribution {
+  font-size: 10px !important;
+}
+
+.location-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  color: var(--green);
+  font-size: 14px;
+  font-weight: 600;
+}
