@@ -18,7 +18,8 @@ ARDUINO_PORT = os.getenv("ARDUINO_PORT", "/dev/cu.usbserial-120")
 BRIDGE_PORT = int(os.getenv("BRIDGE_PORT", "5001"))
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://127.0.0.1:5501,http://localhost:5501",
+    "http://127.0.0.1:5501,http://localhost:5501,"
+    "http://127.0.0.1:5504,http://localhost:5504",
 ).split(",")
 
 # De firmware past maximaal 40 tekens na "https://" in 48 bytes.
