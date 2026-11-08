@@ -29,6 +29,22 @@ header {
   justify-content: space-between;
   gap: 16px;
 }
+.help-points-link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border: 1px solid #9cae91;
+  border-radius: 10px;
+  background: white;
+  color: var(--green);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+.help-points-link:hover { background: #edf2e5; }
 .brand { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
 .brand b { display: none; }
 .brand span { color: #54752a; }
@@ -68,6 +84,9 @@ summary { min-height: 48px; padding: 12px 4px; cursor: pointer; }
 .sound-toggle:hover { background: #edf2e5; }
 .sound-toggle[aria-pressed="false"] { text-decoration: line-through; }
 @media (max-width: 359px) {
+  header { gap: 8px; padding-inline: 12px; }
+  .help-points-link { padding-inline: 8px; font-size: 12px; }
+  .demo-label { padding-inline: 7px; white-space: nowrap; }
   main { padding: 12px 16px 24px; }
   .help-card { padding: 20px; }
   .primary { font-size: 24px; }
