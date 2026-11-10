@@ -1,0 +1,230 @@
+.brand {
+  color: var(--green);
+  text-decoration: none;
+}
+
+.leave-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.feedback-intro {
+  margin: 12px 0 24px;
+}
+
+.feedback-form {
+  display: grid;
+  gap: 24px;
+}
+
+.feedback-form fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.feedback-form legend,
+.comment-field > label {
+  display: block;
+  margin-bottom: 10px;
+  padding: 0;
+  font-weight: 700;
+}
+
+.field-note {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* Beoordeling: vijf grote, gelabelde keuzes. */
+.rating-options {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rating-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 76px;
+  padding: 8px 4px;
+  border: 1px solid #9cae91;
+  border-radius: 10px;
+  background: white;
+  text-align: center;
+  cursor: pointer;
+}
+
+.rating-option input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.rating-number {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.rating-label {
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.rating-option:hover {
+  background: #edf2e5;
+}
+
+.rating-option:has(input:checked) {
+  border: 2px solid var(--green);
+  background: var(--green);
+  color: white;
+}
+
+.rating-option:has(input:focus-visible) {
+  outline: 3px solid var(--green);
+  outline-offset: 3px;
+}
+
+.rating-group[aria-invalid="true"] .rating-option {
+  border-color: #a3341f;
+}
+
+.field-error {
+  margin: 10px 0 0;
+  color: #a3341f;
+  font-weight: 600;
+}
+
+/* Categorieën */
+.category-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.category-option input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--green);
+}
+
+/* Opmerking */
+.privacy-note {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-left: 4px solid #54752a;
+  border-radius: 4px;
+  background: #edf2e5;
+  color: var(--green);
+  font-size: 14px;
+}
+
+.comment-field textarea {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #9cae91;
+  border-radius: 10px;
+  color: var(--green);
+  font: inherit;
+  resize: vertical;
+}
+
+.comment-field textarea:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 2px;
+}
+
+.comment-count {
+  margin: 6px 0 0;
+  font-size: 13px;
+  text-align: right;
+}
+
+/* Acties en statussen */
+.submit-button {
+  width: 100%;
+  min-height: 56px;
+  padding: 14px;
+  border: 2px solid var(--green);
+  border-radius: 14px;
+  background: var(--green);
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.submit-button:hover {
+  background: #29584c;
+}
+
+.submit-button:disabled {
+  opacity: 0.7;
+}
+
+.leave-link {
+  justify-self: center;
+  margin-top: -12px;
+}
+
+.failure-banner {
+  margin-top: 0;
+  background: #fbeae6;
+}
+
+.failure-banner .secondary,
+.confirmation-banner .back-button {
+  margin-top: 12px;
+}
+
+.confirmation-banner {
+  margin-top: 0;
+}
+
+.confirmation-banner strong:focus {
+  outline: none;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.settings-content label input {
+  margin: 0;
+  accent-color: var(--green);
+}
+
+@media (max-width: 400px) {
+  .rating-options {
+    gap: 6px;
+  }
+
+  .rating-label {
+    font-size: 11px;
+  }
+}
+
+@media (forced-colors: active) {
+  .rating-option:has(input:checked) {
+    border: 3px solid Highlight;
+  }
+}
