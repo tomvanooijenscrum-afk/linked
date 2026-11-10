@@ -13,7 +13,11 @@
   }
 
   function showUnavailable(element) {
-    element.textContent = "Map preview unavailable.";
+    element.textContent = global.LinkedI18n
+      ? global.LinkedI18n.t("location.mapUnavailable")
+      : "Map preview unavailable.";
+    // Lets the language switch re-translate this message.
+    element.dataset.i18n = "location.mapUnavailable";
     element.dataset.mapState = "unavailable";
   }
 
@@ -24,6 +28,7 @@
       return;
     }
 
+    delete element.dataset.i18n;
     let mapState = maps.get(element);
     if (!location) {
       if (mapState) {
