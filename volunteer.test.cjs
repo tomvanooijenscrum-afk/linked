@@ -210,6 +210,9 @@ function setup(
     "#nearby-status",
     "#requests-map",
     "#tap-request-list",
+    "#overview-list",
+    "#overview-empty",
+    "#overview-status",
     "#clear-tap-requests",
     "#tap-alert",
     "#tap-alert-text",
@@ -740,3 +743,22 @@ runTapTests().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
+// Story 11: locationless requests stay selectable and numbered after acceptance.
+{
+  const storage = createStorage();
+  const store = loadStore(storage);
+  store.createRequest();
+  const view = setup(storage);
+  const list = view.elements.get("#overview-list");
+  assert.equal(list.children.length, 1);
+  const number = list.children[0].children[0].children[0].textContent;
+  assert.match(list.children[0].children[0].children[1].children[0].textContent, /No location shared/);
+  list.children[0].children[0].listeners.click();
+  assert.equal(list.children[0].dataset.selected, "true");
+  list.children[0].children[1].children[1].listeners.click();
+  assert.equal(store.getRequest().status, "accepted");
+  assert.equal(list.children[0].children[0].children[0].textContent, number);
+  assert.equal(setup(storage).elements.get("#overview-list").children[0].children[0].children[0].textContent, number);
+  console.log("Passed (story 11): locationless request, selection, acceptance, stable numbering on refresh.");
+}

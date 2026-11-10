@@ -21,22 +21,23 @@
     <script src="volunteer.js" defer></script>
   </head>
   <body>
+    <a class="skip-link" href="#request-overview">Skip to requests</a>
     <header>
       <span class="brand" aria-label="Linked">
         <b aria-hidden="true">↗</b>
         linked<span>.</span>
       </span>
-      <nav class="header-links" aria-label="Pages">
+      <nav class="header-links" aria-label="Volunteer navigation">
+        <a class="back-link" href="volunteer.html" aria-current="page">Requests</a>
         <a class="back-link" href="wristbands.html">Wristbands</a>
-        <a class="back-link" href="index.html">Requester view</a>
       </nav>
     </header>
 
     <main>
       <section class="intro" aria-labelledby="page-title">
         <span class="eyebrow">VOLUNTEER INBOX</span>
-        <h1 id="page-title">A little help, <em>closer.</em></h1>
-        <p>Review a request and accept it when you’re ready to help.</p>
+        <h1 id="page-title">Requests overview</h1>
+        <p>Select a numbered request or map marker to view its details.</p>
       </section>
 
       <section
@@ -99,16 +100,16 @@
       </section>
 
       <section
-        class="inbox-card nearby-card"
+        id="request-overview" class="inbox-card nearby-card"
         aria-labelledby="nearby-title"
       >
         <div class="card-top">
-          <span class="eyebrow">WRISTBAND REQUESTS</span>
+          <span class="eyebrow">ALL INCOMING REQUESTS</span>
           <span class="inbox-badge">SIMULATED</span>
         </div>
-        <h2 id="nearby-title">Requests near you</h2>
+        <h2 id="nearby-title">Requests &amp; locations</h2>
         <p
-          id="nearby-status"
+          hidden id="nearby-status"
           class="inbox-status"
           tabindex="-1"
           role="status"
@@ -116,11 +117,16 @@
         >
           No wristband requests yet.
         </p>
+        <p id="overview-status" class="inbox-status" role="status" aria-live="polite"></p>
+        <p class="overview-hint">Numbers match the list and map. Requests without a shared location stay in the list.</p>
+        <div class="overview-grid">
+        <div><h3>Request list</h3><ol id="overview-list" class="tap-request-list" aria-label="All incoming requests"></ol><p id="overview-empty" hidden>No requests yet. Incoming requests will appear here.</p></div>
+        <div><h3>Request locations</h3>
         <div
           id="requests-map"
           class="requests-map"
-          role="img"
-          aria-label="Map of your demo position and nearby wristband requests. The list below shows the same requests."
+          role="region"
+          aria-label="Request locations. Select a numbered marker to view details."
         ></div>
         <ul class="map-legend" aria-hidden="true">
           <li><span class="legend-dot legend-you"></span>You</li>
@@ -128,7 +134,9 @@
           <li><span class="legend-dot legend-pending"></span>Waiting</li>
           <li><span class="legend-dot legend-accepted"></span>Accepted</li>
         </ul>
-        <ol
+        </div></div>
+        <details class="demo-tools"><summary>Demo tools &amp; reader status</summary>
+        <ol hidden
           id="tap-request-list"
           class="tap-request-list"
           aria-label="Wristband requests, closest first"
@@ -151,14 +159,15 @@
           Rachelsmolen, chosen at random for each tap. No real location is
           used.
         </p>
+        </details>
       </section>
 
-      <section class="inbox-card" aria-labelledby="inbox-title">
+      <details id="web-request-section" class="inbox-card"><summary>Web request status &amp; acceptance confirmation</summary>
         <div class="card-top">
           <span class="eyebrow">HELP REQUESTS</span>
           <span class="inbox-badge">DEMO</span>
         </div>
-        <h2 id="inbox-title">Requests for help</h2>
+        <h2 id="inbox-title">Web request details</h2>
         <p id="inbox-status" class="inbox-status" role="status" aria-live="polite">
           No pending requests right now.
         </p>
@@ -239,7 +248,7 @@
           Approximate location appears here only after acceptance;
           local browser storage is not secure access control.
         </p>
-      </section>
+      </details>
     </main>
   </body>
 </html>

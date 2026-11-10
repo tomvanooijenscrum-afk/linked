@@ -43,7 +43,7 @@
   }
 
   // requests: gesorteerd op afstand, met distanceMeters en label.
-  function update(element, volunteer, requests) {
+  function update(element, volunteer, requests, onSelect, selectedId) {
     const leaflet = global.L;
     if (!leaflet) {
       showUnavailable(element);
@@ -65,7 +65,7 @@
             ? colors.closest
             : colors.pending;
       const position = [request.location.latitude, request.location.longitude];
-      leaflet
+      const marker = leaflet
         .circleMarker(position, {
           radius: isClosest ? 11 : 8,
           color: "white",
@@ -75,6 +75,14 @@
         })
         .bindTooltip(request.label)
         .addTo(state.layer);
+      if (leaflet.marker && leaflet.divIcon && request.number) {
+        const numbered = leaflet.marker(position, {
+          icon: leaflet.divIcon({className: "numbered-marker" + (request.id === selectedId ? " is-selected" : ""), html: String(request.number), iconSize: [34,34], iconAnchor: [17,17]}),
+          title: request.label + ". View details", keyboard: true,
+          zIndexOffset: request.id === selectedId ? 1000 : 0,
+        }).addTo(state.layer);
+        numbered.on("click", () => onSelect?.(request.id));
+      } else if (marker.on) marker.on("click", () => onSelect?.(request.id));
       points.push(position);
     });
 

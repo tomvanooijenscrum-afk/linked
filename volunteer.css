@@ -675,3 +675,37 @@ h2 {
     aspect-ratio: 4 / 3;
   }
 }
+
+/* Volunteer workspace */
+main { max-width: 1240px; }
+header { max-width: 1240px; }
+.header-links a { padding: 10px 14px; border-radius: 8px; text-decoration: none; }
+.header-links a:hover { background: #edf2e5; }
+.header-links [aria-current="page"] { background: var(--green); color: white; }
+.intro { margin-bottom: 24px; }
+h1 { font-size: clamp(32px, 4vw, 44px); letter-spacing: -1px; }
+.availability-card { padding: 16px 24px; }
+.availability-label { font-size: 20px; }
+.overview-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 28px; margin-top: 24px; }
+.overview-grid h3 { margin: 0 0 12px; font-size: 16px; }
+.overview-hint { margin-bottom: 0; font-size: 14px; }
+.overview-grid .requests-map { margin-top: 0; height: 440px; }
+.overview-grid .tap-request-list { margin: 0; }
+.overview-request { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+.overview-request[data-selected="true"] { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+.request-select { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; background: white; padding: 16px; text-align: left; color: var(--green); font-weight: 600; }
+.request-select:hover, .overview-request[data-selected="true"] .request-select { background: #f0f5e9; }
+.request-select small { display: block; margin-top: 6px; font-size: 13px; font-weight: 400; color: var(--muted); }
+.request-number, .numbered-marker { display: grid; place-items: center; border-radius: 50%; background: var(--green); color: white; font-weight: 700; }
+.request-number { width: 34px; height: 34px; flex: 0 0 34px; }
+.numbered-marker { border: 2px solid white; box-shadow: 0 2px 8px #183e3755; font-size: 14px; }
+.numbered-marker.is-selected { background: #b5461f; outline: 3px solid #b5461f55; }
+.numbered-map-label { display: none; }
+.overview-details { padding: 0 16px 16px; }
+.overview-details p { font-size: 14px; }
+.demo-tools { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px; }
+summary { cursor: pointer; font-weight: 600; padding: 8px 0; }
+.skip-link { position: absolute; left: 16px; top: -100px; z-index: 2000; background: white; padding: 12px; color: var(--green); }
+.skip-link:focus { top: 12px; }
+@media (max-width: 860px) { .overview-grid { grid-template-columns: 1fr; } .overview-grid .requests-map { height: 320px; } }
+@media (max-width: 560px) { header { align-items: flex-start; flex-direction: column; } .header-links { gap: 4px; } .header-links a { padding: 10px; } .inbox-card { padding: 18px; } }

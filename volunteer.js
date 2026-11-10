@@ -37,6 +37,9 @@ const readerMessages = {
     "Wristband reader: Arduino not connected. Close Serial Monitor if it is open.",
 };
 
+let selectedOverviewId = null;
+let overviewNumbers = {};
+try { overviewNumbers = JSON.parse(localStorage.getItem("linked.overview-numbers.v1") || "{}"); if (!overviewNumbers || typeof overviewNumbers !== "object" || Array.isArray(overviewNumbers)) overviewNumbers = {}; } catch {}
 let currentRequest = null;
 let lastTapId = null;
 let isPollingTaps = false;
@@ -149,11 +152,7 @@ function renderNearby(isAvailable) {
     tapAlert.hidden = true;
   }
 
-  requestMap.update(
-    requestsMap,
-    tapRequestStore.volunteerLocation,
-    mapRequests,
-  );
+  renderOverview(isAvailable);
 }
 
 function render() {
@@ -342,3 +341,67 @@ clearTapRequestsButton.addEventListener("click", clearTapRequests);
 render();
 pollTaps();
 setInterval(pollTaps, tapPollInterval);
+
+function renderOverview(isAvailable) {
+  const list = document.querySelector("#overview-list");
+  if (!list) return;
+  const requests = tapRequestStore.getTapRequestsByDistance().map(request => ({...request, source: "wristband"}));
+  const web = requestStore.getRequest();
+  if (web && web.status !== "cancelled") requests.push({...web, source: "web", location: web.approximateLocation});
+  requests.sort((a,b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
+  let next = Math.max(0, ...Object.values(overviewNumbers).filter(Number.isFinite));
+  requests.forEach(request => {
+    if (!Number.isInteger(overviewNumbers[request.id])) overviewNumbers[request.id] = ++next;
+    request.number = overviewNumbers[request.id];
+    request.label = "Request " + request.number;
+  });
+  try { localStorage.setItem("linked.overview-numbers.v1", JSON.stringify(overviewNumbers)); } catch {}
+  if (!requests.some(request => request.id === selectedOverviewId)) selectedOverviewId = null;
+  list.replaceChildren(...requests.map(request => {
+    const item = document.createElement("li");
+    item.className = "overview-request";
+    item.dataset.selected = String(request.id === selectedOverviewId);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "request-select";
+    button.setAttribute("aria-expanded", String(request.id === selectedOverviewId));
+    const number = document.createElement("span");
+    number.className = "request-number";
+    number.textContent = request.number;
+    const text = document.createElement("span");
+    text.textContent = request.label + " | " + (request.source === "web" ? "Web request" : "Wristband request");
+    const meta = document.createElement("small");
+    meta.textContent = (request.status === "accepted" ? "Accepted" : "Waiting") + " | " + (request.location ? "Location shared" : "No location shared");
+    text.append(meta); button.append(number, text);
+    button.addEventListener("click", () => { selectedOverviewId = selectedOverviewId === request.id ? null : request.id; renderOverview(isAvailable); });
+    item.append(button);
+    if (request.id === selectedOverviewId) {
+      const details = document.createElement("div"); details.className = "overview-details";
+      const description = document.createElement("p");
+      description.textContent = "Received " + formatReceivedTime(request.createdAt) + ". " + (request.source === "wristband" ? "Wristband " + request.wristbandUid + ". " : "Help requested. ") + (request.location ? (request.location.label || "Approximate location shown on the map.") : "No location shared. This request can still be accepted.");
+      details.append(description);
+      if (request.status === "accepted") {
+        const confirmation = document.createElement("p");
+        confirmation.textContent = "Accepted. The requester has been notified that a volunteer is on the way.";
+        details.append(confirmation);
+      }
+      if (request.status === "pending") {
+        const accept = document.createElement("button"); accept.type = "button"; accept.className = "primary"; accept.textContent = isAvailable ? "Accept request " + request.number : "Set yourself available to accept"; accept.disabled = !isAvailable;
+        accept.addEventListener("click", () => { if (request.source === "web") acceptRequest(); else acceptTapRequest(request.id); });
+        details.append(accept);
+      }
+      item.append(details);
+    }
+    return item;
+  }));
+  document.querySelector("#overview-empty").hidden = requests.length !== 0;
+  document.querySelector("#overview-status").textContent = requests.length + " requests | " + requests.filter(r => r.status === "pending").length + " waiting | " + requests.filter(r => r.location).length + " on the map";
+  requestMap.update(requestsMap, tapRequestStore.volunteerLocation, requests.filter(r => r.location), id => {
+    selectedOverviewId = id;
+    renderOverview(isAvailable);
+    const index = requests.findIndex(r => r.id === id);
+    const button = list.children[index]?.children[0];
+    button?.focus();
+    button?.scrollIntoView?.({block: "nearest", behavior: "smooth"});
+  }, selectedOverviewId);
+}
