@@ -3,7 +3,8 @@ globalThis.LinkedTranslations = globalThis.LinkedTranslations || {};
 globalThis.LinkedTranslations.nl = {
   "page.title": "Linked | Hulp vragen",
 
-  "header.demo": "Demo",
+  "nav.helpPoints": "Vind hulppunten",
+  "nav.feedback": "Geef feedback",
 
   "help.title": "Hulp nodig?",
   "help.instruction": "Tik één keer om hulp te vragen.",
@@ -14,11 +15,11 @@ globalThis.LinkedTranslations.nl = {
 
   "status.idle.title": "Geen actief verzoek",
   "status.idle.description": "Je hebt nog geen hulp gevraagd.",
-  "status.sent.title": "Verzoek verzonden (demo)",
-  "status.sent.description": "Wachten op een gesimuleerde ontvangstbevestiging.",
-  "status.received.title": "Ontvangst gesimuleerd (demo)",
+  "status.sent.title": "Verzoek verzonden",
+  "status.sent.description": "Wachten op een ontvangstbevestiging.",
+  "status.received.title": "Verzoek ontvangen",
   "status.received.description":
-    "Je verzoek is beschikbaar voor vrijwilligers in deze demo-inbox.",
+    "Je verzoek is beschikbaar voor vrijwilligers in de inbox.",
   "status.accepted.title": "Een vrijwilliger is onderweg",
   "status.accepted.description":
     "Je verzoek is geaccepteerd. Een vrijwilliger is onderweg.",
@@ -64,9 +65,9 @@ globalThis.LinkedTranslations.nl = {
   "location.feedback.cancelled":
     "Locatie delen is gestopt. Er is geen locatie opgeslagen.",
 
-  "demo.noteBefore":
-    "Alleen een demo. Er wordt geen echt verzoek verstuurd. Bel bij nood ",
-  "demo.noteAfter": ".",
+  "emergency.noteBefore":
+    "Bel bij nood ",
+  "emergency.noteAfter": ".",
   "settings.summary": "Geluidsinstellingen",
   "sound.on": "Geluid aan",
   "sound.off": "Geluid uit",

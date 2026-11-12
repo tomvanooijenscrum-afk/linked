@@ -261,7 +261,7 @@ assert.equal(app.timers.size, 0);
 assert.equal(app.elements.get("#request-status").hidden, true);
 assert.equal(app.elements.get("#request-location-preview").hidden, true);
 app.click("#request-button");
-assert.equal(app.title(), "Request sent (demo)");
+assert.equal(app.title(), "Request sent");
 assert.equal(app.elements.get("#request-status").hidden, false);
 assert.equal(app.elements.get("#request-location-preview").hidden, true);
 assert.equal(app.elements.get("#request-button").disabled, true);
@@ -273,7 +273,7 @@ for (let click = 0; click < 10; click += 1) {
 assert.equal(app.timers.size, 1, "Slechts één actief verzoek/timer");
 
 app.runReceipt();
-assert.equal(app.title(), "Receipt simulated (demo)");
+assert.equal(app.title(), "Request received");
 assert.ok(
   app.elements.get("#status-description").textContent.includes(
     "available to volunteers",
@@ -292,7 +292,7 @@ assert.equal(
   "Ask for help again",
 );
 app.click("#request-button");
-assert.equal(app.title(), "Request sent (demo)");
+assert.equal(app.title(), "Request sent");
 assert.equal(app.timers.size, 1);
 
 const oldReceipt = app.timers.values().next().value;
@@ -304,15 +304,15 @@ app.click("#cancel-button");
 assert.equal(app.title(), "Request cancelled");
 app.click("#request-button");
 oldReceipt();
-assert.equal(app.title(), "Request sent (demo)");
+assert.equal(app.title(), "Request sent");
 app.runReceipt();
-assert.equal(app.title(), "Receipt simulated (demo)");
+assert.equal(app.title(), "Request received");
 
 const statusFlowApp = setup();
 statusFlowApp.click("#request-button");
-assert.equal(statusFlowApp.title(), "Request sent (demo)");
+assert.equal(statusFlowApp.title(), "Request sent");
 statusFlowApp.runReceipt();
-assert.equal(statusFlowApp.title(), "Receipt simulated (demo)");
+assert.equal(statusFlowApp.title(), "Request received");
 statusFlowApp.click("#cancel-button");
 assert.equal(statusFlowApp.title(), "Request cancelled");
 

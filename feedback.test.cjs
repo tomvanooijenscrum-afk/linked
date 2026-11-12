@@ -67,7 +67,6 @@ function setup(storage = createStorage()) {
     "#retry-button",
     "#feedback-confirmation",
     "#confirmation-title",
-    "#simulate-failure",
   ];
   const elements = new Map();
   for (const selector of selectors) {
@@ -290,22 +289,6 @@ async function run() {
     assert.equal(app.saved()[0].comment, "Map did not load.");
   }
   console.log("Passed: failed submission keeps input and retry succeeds.");
-
-  // 7. Gesimuleerde fout via demo-optie.
-  {
-    const app = setup();
-    app.get("#simulate-failure").checked = true;
-    app.ratings[2].checked = true;
-    app.submit();
-    await settle();
-    assert.equal(app.get("#feedback-failure").hidden, false);
-    assert.equal(app.saved().length, 0);
-    app.get("#simulate-failure").checked = false;
-    app.get("#retry-button").listeners.click();
-    await settle();
-    assert.equal(app.saved().length, 1);
-  }
-  console.log("Passed: demo failure toggle and retry.");
 
   // 8. Validatie in de opslagmodule.
   {

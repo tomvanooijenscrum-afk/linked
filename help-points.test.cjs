@@ -260,8 +260,8 @@ assert.match(html, /href="index\.html#page-title">Ask for help/);
 assert.match(html, /id="open-now"/);
 assert.match(html, /id="no-points"/);
 assert.match(html, /id="no-open-points"/);
-assert.match(html, /Fictional demo data — not operational/);
-assert.match(html, /Demo schedules are illustrative and not verified opening hours/);
+assert.match(html, /Help-point availability is unverified/);
+assert.match(html, /Opening hours have not been verified/);
 assert.doesNotMatch(source, /geolocation|navigator\.|getCurrentPosition/);
 
 const app = setup();
@@ -274,7 +274,7 @@ app.clickPoint(0);
 assert.match(getText(app.get("#help-point-details")), /Catharinaplein Help Point/);
 assert.match(getText(app.get("#help-point-details")), /Detailed directions/);
 assert.match(getText(app.get("#help-point-details")), /Landmarks/);
-assert.match(getText(app.get("#help-point-details")), /Demo schedule \(not verified\)/);
+assert.match(getText(app.get("#help-point-details")), /Opening hours \(unverified\)/);
 assert.equal(
   app.get("#help-point-list").querySelector('[data-point-id="catharinaplein"]').focused,
   true,

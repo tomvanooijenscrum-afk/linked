@@ -7,7 +7,7 @@
   const volunteerLocation = Object.freeze({
     latitude: 51.4516,
     longitude: 5.4816,
-    label: "Your demo position (Fontys Rachelsmolen)",
+    label: "Your position (Fontys Rachelsmolen)",
   });
   const minDistanceMeters = 300;
   const maxDistanceMeters = 3000;

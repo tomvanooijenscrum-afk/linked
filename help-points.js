@@ -10,7 +10,7 @@ const validationErrors =
   globalThis.LinkedHelpPoints.validateHelpPointData(helpPoints);
 
 if (validationErrors.length > 0) {
-  throw new Error(`Invalid help-point demo data: ${validationErrors.join(" ")}`);
+  throw new Error(`Invalid help-point data: ${validationErrors.join(" ")}`);
 }
 
 document.querySelector("#event-name").textContent =
@@ -69,7 +69,7 @@ function renderDetails(point) {
     item.textContent = hours;
     hoursList.append(item);
   }
-  appendDetail(details, "Demo schedule (not verified)", hoursList);
+  appendDetail(details, "Opening hours (unverified)", hoursList);
   appendDetail(details, "Detailed directions", document.createTextNode(point.directions));
 
   const landmarks = document.createElement("ul");
@@ -93,7 +93,7 @@ function renderDetails(point) {
       item.textContent = `Closed ${period.start.replace("T", " ")} to ${period.end.replace("T", " ")}`;
       closureList.append(item);
     }
-    appendDetail(details, "Scheduled closures (fictional demo)", closureList);
+    appendDetail(details, "Scheduled closures", closureList);
   }
 
   const detailsTitle = document.createElement("h2");

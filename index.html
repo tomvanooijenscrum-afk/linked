@@ -19,7 +19,7 @@
     <script src="approximate-map.js" defer></script>
     <script src="app.js" defer></script>
   </head>
-  <body>
+  <body class="request-page">
     <header>
       <span class="brand" aria-label="Linked">
         <b aria-hidden="true">↗</b>
@@ -27,9 +27,9 @@
       </span>
       <nav class="header-nav" aria-label="Pages">
         <a class="help-points-link" href="help-points.html">
-          Find Help Points
+          <span data-i18n="nav.helpPoints">Find Help Points</span>
         </a>
-        <a href="feedback.html">Give feedback</a>
+        <a href="feedback.html" data-i18n="nav.feedback">Give feedback</a>
       </nav>
       <div class="header-tools">
         <label class="language-picker" for="language-select">
@@ -39,7 +39,6 @@
             <option value="nl">Nederlands</option>
           </select>
         </label>
-        <span class="demo-label" data-i18n="header.demo">Demo</span>
       </div>
     </header>
 
@@ -110,7 +109,7 @@
           id="request-button"
           class="primary"
           type="button"
-          aria-describedby="demo-notice"
+          aria-describedby="emergency-notice"
         >
           <span id="request-button-label">Ask for help</span>
           <span aria-hidden="true">↗</span>
@@ -140,8 +139,8 @@
         </div>
 
 
-        <p id="demo-notice" class="demo-note">
-          <span data-i18n="demo.noteBefore">Demo only. No real request is sent. In an emergency, call </span><a href="tel:112">112</a><span data-i18n="demo.noteAfter">.</span>
+        <p id="emergency-notice" class="emergency-note">
+          <span data-i18n="emergency.noteBefore">In an emergency, call </span><a href="tel:112">112</a><span data-i18n="emergency.noteAfter">.</span>
         </p>
         <noscript>
           <p class="script-warning">

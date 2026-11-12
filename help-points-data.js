@@ -1,7 +1,7 @@
 (function (global) {
   const helpPointData = {
     eventName: "Stratumseind, Eindhoven",
-    eventLabel: "Fictional help-point locations and demo schedules",
+    eventLabel: "Stratumseind help points",
     helpPoints: [
       {
         id: "catharinaplein",
@@ -12,7 +12,7 @@
           { days: [5, 6], opens: "22:00", closes: "04:00" },
         ],
         directions:
-          "Walk along Stratumseind toward Catharinaplein. The large church with two towers marks the northern entrance. The example help point is positioned in this area for demonstration purposes.",
+          "Walk along Stratumseind toward Catharinaplein. The large church with two towers marks the northern entrance.",
         landmarks: [
           "St. Catharine's Church",
           "The church's two recognizable towers",
@@ -30,7 +30,7 @@
           { days: [5, 6], opens: "21:00", closes: "03:00" },
         ],
         directions:
-          "Follow Stratumseind until you reach the intersection with 't College. The fictional help point represents a staffed event position near this junction.",
+          "Follow Stratumseind until you reach the intersection with 't College.",
         landmarks: [
           "Stratumseind nightlife street",
           "Side street 't College",
@@ -47,7 +47,7 @@
           { days: [5, 6], opens: "23:00", closes: "05:00" },
         ],
         directions:
-          "Walk south along Stratumseind toward the Dommel river. The bridge near the transition toward Stratumsedijk marks the southern end of the nightlife street. The demo point represents a possible event position near this area.",
+          "Walk south along Stratumseind toward the Dommel river. The bridge near the transition toward Stratumsedijk marks the southern end of the nightlife street.",
         landmarks: [
           "Dommel river",
           "Southern end of Stratumseind",

@@ -8,7 +8,6 @@ const failureBanner = document.querySelector("#feedback-failure");
 const retryButton = document.querySelector("#retry-button");
 const confirmation = document.querySelector("#feedback-confirmation");
 const confirmationTitle = document.querySelector("#confirmation-title");
-const simulateFailure = document.querySelector("#simulate-failure");
 const ratingInputs = [...document.querySelectorAll('input[name="rating"]')];
 const categoryInputs = [
   ...document.querySelectorAll('input[name="category"]'),
@@ -84,9 +83,7 @@ function sendFeedback() {
     categories: getSelectedCategories(),
     comment: commentField.value,
   };
-  const submission = simulateFailure.checked
-    ? Promise.reject(new Error("Simulated failure (demo)."))
-    : feedbackStore.submitFeedback(input);
+  const submission = feedbackStore.submitFeedback(input);
 
   return submission
     .then(() => {

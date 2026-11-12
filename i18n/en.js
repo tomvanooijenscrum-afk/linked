@@ -3,7 +3,8 @@ globalThis.LinkedTranslations = globalThis.LinkedTranslations || {};
 globalThis.LinkedTranslations.en = {
   "page.title": "Linked | Ask for help",
 
-  "header.demo": "Demo",
+  "nav.helpPoints": "Find Help Points",
+  "nav.feedback": "Give feedback",
 
   "help.title": "Need help?",
   "help.instruction": "Tap once to ask for help.",
@@ -14,11 +15,11 @@ globalThis.LinkedTranslations.en = {
 
   "status.idle.title": "No active request",
   "status.idle.description": "You haven’t asked for help yet.",
-  "status.sent.title": "Request sent (demo)",
-  "status.sent.description": "Waiting for a simulated receipt confirmation.",
-  "status.received.title": "Receipt simulated (demo)",
+  "status.sent.title": "Request sent",
+  "status.sent.description": "Waiting for receipt confirmation.",
+  "status.received.title": "Request received",
   "status.received.description":
-    "Your request is available to volunteers in this demo inbox.",
+    "Your request is available to volunteers in the inbox.",
   "status.accepted.title": "A volunteer is on the way",
   "status.accepted.description":
     "Your request has been accepted. A volunteer is on the way.",
@@ -63,9 +64,9 @@ globalThis.LinkedTranslations.en = {
   "location.feedback.cancelled":
     "Location sharing was stopped. No location was saved.",
 
-  "demo.noteBefore":
-    "Demo only. No real request is sent. In an emergency, call ",
-  "demo.noteAfter": ".",
+  "emergency.noteBefore":
+    "In an emergency, call ",
+  "emergency.noteAfter": ".",
   "settings.summary": "Sound settings",
   "sound.on": "Sound on",
   "sound.off": "Sound off",
