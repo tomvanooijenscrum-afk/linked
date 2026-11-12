@@ -127,6 +127,7 @@ function setup(storage = createStorage(), geolocation = null, geocodeFetch = nul
     "#request-location-label",
     "#sound-toggle",
     "#sound-toggle-label",
+    "#language-select",
   ];
   const elements = new Map();
   const timers = new Map();
@@ -195,6 +196,9 @@ function setup(storage = createStorage(), geolocation = null, geocodeFetch = nul
   });
   vm.runInContext(storeSource, context);
   vm.runInContext(approximateMapSource, context);
+  for (const file of ["i18n/en.js", "i18n/nl.js", "i18n/i18n.js"]) {
+    vm.runInContext(fs.readFileSync(path.join(__dirname, file), "utf8"), context);
+  }
   vm.runInContext(source, context);
 
   return {

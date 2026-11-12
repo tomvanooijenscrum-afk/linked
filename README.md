@@ -295,6 +295,82 @@ worden wachtende verzoeken bewaard maar verborgen, zonder melding.
 | T7–T9 | Hulp aanvragen en ontvangen | Bestaande flow | Bestaande tests | In te vullen |
 | T10 | Gedeactiveerd bandje | Token geweigerd | – | Volgende fase (backend) |
 
+## Anonieme feedback (user story 14)
+
+Via **Give feedback** in de header van `index.html` opent `feedback.html`.
+Feedback geven is optioneel: de link is een gewone pagina en blokkeert of
+onderbreekt de hulpknop nooit. **Leave without sending** en **Back to Linked**
+gaan terug naar het hoofdscherm zonder iets te verzenden.
+
+Het formulier vraagt:
+
+- een beoordeling van 1 tot 5 (verplicht), met labels **Very poor**,
+  **Poor**, **Okay**, **Good** en **Very good**;
+- één of meer categorieën (optioneel): **Clarity**, **Ease of use**,
+  **Technical problems**, **Response speed**, **Other**;
+- een opmerking van maximaal 500 tekens (optioneel), met teller.
+
+Boven het tekstveld staat dat gebruikers geen naam, telefoonnummer,
+e-mailadres of andere persoonsgegevens moeten invullen.
+
+### Wat wordt opgeslagen
+
+`feedback-store.js` (`LinkedFeedbackStore`) bewaart feedback los van
+hulpverzoeken onder `linked.feedback.v1` (maximaal 50 items). Een item
+wordt opgebouwd uit een vaste lijst velden: `rating`, `categories`,
+`comment` en `submittedAt`. `submittedAt` is alleen de datum, zonder
+tijdstip, zodat feedback niet via het tijdstip aan een verzoek te koppelen
+is. Andere velden in de invoer, zoals een verzoek-id, locatie of account,
+worden nooit overgenomen. De feedbackpagina laadt `request-store.js`
+niet eens. Zonder backend blijft feedback in de browser van dit apparaat;
+een echte toepassing moet het naar een server sturen zonder IP-adres of
+andere identificerende gegevens te bewaren.
+
+### Statussen
+
+- **Geen beoordeling:** melding **Choose a rating from 1 to 5 before
+  sending.**, focus naar de eerste beoordeling; categorieën en opmerking
+  blijven staan.
+- **Verzenden:** de knop toont **Sending…** en is uitgeschakeld; snelle
+  dubbele klikken leveren één item op.
+- **Gelukt:** het formulier verdwijnt en er verschijnt een bevestiging met
+  alleen **Back to Linked**. Vanaf dit scherm kan niets opnieuw worden
+  verzonden.
+- **Mislukt:** (bijvoorbeeld volle of geblokkeerde opslag) melding met
+  **Try again**; alle invoer blijft behouden. Voor de demo kan een fout
+  worden nagebootst met **Demo options → Simulate failed submission**.
+
+### Handmatig testen
+
+1. Open `index.html` en kies **Give feedback**.
+2. Kies een categorie, typ een opmerking en klik **Send feedback** zonder
+   beoordeling: melding verschijnt, invoer blijft staan.
+3. Typ of plak meer dan 500 tekens: het veld stopt bij 500 en de teller
+   toont **500 / 500 characters**.
+4. Kies een beoordeling en verzend: bevestiging, geen formulier meer.
+5. Zet **Simulate failed submission** aan, verzend: foutmelding, invoer
+   blijft. Zet de optie uit en kies **Try again**: bevestiging.
+6. Kies **Leave without sending**: terug naar het hoofdscherm, er is niets
+   opgeslagen (controleer `linked.feedback.v1` in DevTools).
+7. Doe alles alleen met het toetsenbord (Tab, pijltjes in de beoordeling,
+   Spatie voor categorieën, Enter om te verzenden) en op 320 px breed.
+
+### Testresultaten
+
+| # | Controle | Criterium | Automatisch | Handmatig |
+|---|---|---|---|---|
+| 1 | Link in menu, aparte pagina, terug zonder verzenden | 1, 11 | Geslaagd | In te vullen |
+| 2 | Vijf gelabelde beoordelingen | 2 | Geslaagd | In te vullen |
+| 3 | Meerdere categorieën kiezen | 3 | Geslaagd | In te vullen |
+| 4 | Opmerking max. 500 tekens met teller | 4 | Geslaagd | In te vullen |
+| 5 | Privacytekst zichtbaar | 5 | Geslaagd | In te vullen |
+| 6 | Zonder beoordeling: melding, invoer blijft | 6, 7 | Geslaagd | In te vullen |
+| 7 | Geen account-, verzoek- of locatiegegevens | 8 | Geslaagd | In te vullen |
+| 8 | Bevestiging, geen herhaalde verzending | 9 | Geslaagd | In te vullen |
+| 9 | Snel herhaald klikken: één item | 9 | Geslaagd | In te vullen |
+| 10 | Mislukt: invoer blijft, opnieuw proberen | 10 | Geslaagd | In te vullen |
+| 11 | Toetsenbord en scherm van 320 px | – | – | In te vullen |
+
 ## Geautomatiseerde controle
 
 Met Node.js geïnstalleerd:
@@ -304,6 +380,9 @@ node app.test.cjs
 node volunteer.test.cjs
 node wristbands.test.cjs
 node help-points.test.cjs
+node feedback.test.cjs
+node --check feedback.js
+node --check feedback-store.js
 node --check app.js
 node --check volunteer.js
 node --check request-store.js

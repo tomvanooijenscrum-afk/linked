@@ -49,6 +49,8 @@ header {
 .brand { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
 .brand b { display: none; }
 .brand span { color: #54752a; }
+.header-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px 16px; }
+.header-nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 600; }
 .demo-label { border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 14px; }
 main { max-width: 560px; margin: auto; padding: 16px 20px 32px; }
 .help-card { background: white; border: 1px solid var(--border); border-radius: 18px; padding: 24px; }

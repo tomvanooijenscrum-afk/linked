@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <meta name="theme-color" content="#183e37" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="feedback.css" />
+    <title>Linked | Give feedback</title>
+
+    <script src="feedback-store.js" defer></script>
+    <script src="feedback.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="index.html" aria-label="Linked, back to main screen">
+        <b aria-hidden="true">↗</b>
+        linked<span>.</span>
+      </a>
+      <nav class="header-nav" aria-label="Pages">
+        <a href="index.html">Back to Linked</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="help-card" aria-labelledby="page-title">
+        <h1 id="page-title">Give feedback</h1>
+        <p class="feedback-intro">
+          Optional and anonymous. Tell us how Linked worked for you so we
+          can improve it. Asking for help never depends on this form.
+        </p>
+
+        <form
+          id="feedback-form"
+          class="feedback-form"
+          novalidate
+        >
+          <fieldset
+            id="rating-group"
+            class="rating-group"
+            aria-describedby="rating-error"
+          >
+            <legend>
+              How was your experience?
+              <span class="field-note">Required</span>
+            </legend>
+            <div class="rating-options">
+              <label class="rating-option">
+                <input type="radio" name="rating" value="1" />
+                <span class="rating-number">1</span>
+                <span class="rating-label">Very poor</span>
+              </label>
+              <label class="rating-option">
+                <input type="radio" name="rating" value="2" />
+                <span class="rating-number">2</span>
+                <span class="rating-label">Poor</span>
+              </label>
+              <label class="rating-option">
+                <input type="radio" name="rating" value="3" />
+                <span class="rating-number">3</span>
+                <span class="rating-label">Okay</span>
+              </label>
+              <label class="rating-option">
+                <input type="radio" name="rating" value="4" />
+                <span class="rating-number">4</span>
+                <span class="rating-label">Good</span>
+              </label>
+              <label class="rating-option">
+                <input type="radio" name="rating" value="5" />
+                <span class="rating-number">5</span>
+                <span class="rating-label">Very good</span>
+              </label>
+            </div>
+            <p
+              id="rating-error"
+              class="field-error"
+              role="alert"
+              hidden
+            >
+              Choose a rating from 1 to 5 before sending.
+            </p>
+          </fieldset>
+
+          <fieldset class="category-group">
+            <legend>
+              What is your feedback about?
+              <span class="field-note">Optional, choose any</span>
+            </legend>
+            <label class="category-option">
+              <input type="checkbox" name="category" value="clarity" />
+              <span>Clarity</span>
+            </label>
+            <label class="category-option">
+              <input type="checkbox" name="category" value="ease-of-use" />
+              <span>Ease of use</span>
+            </label>
+            <label class="category-option">
+              <input
+                type="checkbox"
+                name="category"
+                value="technical-problems"
+              />
+              <span>Technical problems</span>
+            </label>
+            <label class="category-option">
+              <input type="checkbox" name="category" value="speed" />
+              <span>Response speed</span>
+            </label>
+            <label class="category-option">
+              <input type="checkbox" name="category" value="other" />
+              <span>Other</span>
+            </label>
+          </fieldset>
+
+          <div class="comment-field">
+            <label for="feedback-comment">
+              What could be improved?
+              <span class="field-note">Optional</span>
+            </label>
+            <p id="privacy-note" class="privacy-note">
+              Please don’t include your name, phone number, email address or
+              other personal details. Your feedback is not linked to an
+              account, a help request or your location.
+            </p>
+            <textarea
+              id="feedback-comment"
+              name="comment"
+              rows="5"
+              maxlength="500"
+              aria-describedby="privacy-note comment-count"
+            ></textarea>
+            <p
+              id="comment-count"
+              class="comment-count"
+              aria-live="polite"
+            >
+              0 / 500 characters
+            </p>
+          </div>
+
+          <div
+            id="feedback-failure"
+            class="status-banner failure-banner"
+            role="alert"
+            hidden
+          >
+            <strong>Your feedback could not be sent.</strong>
+            <p>Nothing you entered was lost. Please try again.</p>
+            <button
+              id="retry-button"
+              class="secondary"
+              type="button"
+            >
+              Try again
+            </button>
+          </div>
+
+          <button
+            id="submit-button"
+            class="submit-button"
+            type="submit"
+          >
+            Send feedback
+          </button>
+          <a class="leave-link" href="index.html">Leave without sending</a>
+        </form>
+
+        <div
+          id="feedback-confirmation"
+          class="status-banner confirmation-banner"
+          role="status"
+          hidden
+        >
+          <strong id="confirmation-title" tabindex="-1">
+            Thank you, your feedback was sent (demo).
+          </strong>
+          <p>It helps the team improve Linked.</p>
+          <a class="secondary back-button" href="index.html">
+            Back to Linked
+          </a>
+        </div>
+
+        <p class="demo-note">
+          Demo only. Feedback is saved in this browser, not sent to a
+          server. In an emergency, call <a href="tel:112">112</a>.
+        </p>
+        <noscript>
+          <p class="script-warning">
+            Enable JavaScript to send feedback.
+          </p>
+        </noscript>
+      </section>
+
+      <details class="settings">
+        <summary>Demo options</summary>
+        <div class="settings-content">
+          <label class="sound-toggle">
+            <input id="simulate-failure" type="checkbox" />
+            Simulate failed submission
+          </label>
+        </div>
+      </details>
+    </main>
+  </body>
+</html>
