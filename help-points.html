@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#183e37" />
+    <link rel="stylesheet" href="help-points.css" />
+    <title>Linked | Help points</title>
+    <script src="help-points-data.js" defer></script>
+    <script src="help-points.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="index.html" aria-label="Linked overview">
+        <b aria-hidden="true">↗</b>
+        linked<span>.</span>
+      </a>
+      <nav class="page-links" aria-label="Pages">
+        <a href="index.html">Back to overview</a>
+        <a href="index.html#page-title">Ask for help</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">EVENT INFORMATION</p>
+        <h1 id="page-title">Find Help Points</h1>
+        <p class="event-name" id="event-name"></p>
+        <p class="demo-warning">
+          <strong>Fictional demo data — not operational.</strong>
+          These example points are not real, staffed, or safe locations. Do not
+          rely on them for support. Confirm any event help-point information
+          with the event organiser.
+        </p>
+      </section>
+
+      <section class="help-points-card" aria-labelledby="list-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ON-SITE INFORMATION</p>
+            <h2 id="list-title">Help points</h2>
+          </div>
+          <label class="open-filter" for="open-now">
+            <input id="open-now" type="checkbox" />
+            <span>Open now</span>
+          </label>
+        </div>
+        <p class="time-note">
+          Demo schedules are illustrative and not verified opening hours.
+          Status uses your device’s local date and time. No location is
+          requested.
+        </p>
+        <p id="results-status" class="results-status" role="status" aria-live="polite"></p>
+        <ul id="help-point-list" class="help-point-list" aria-label="Event help points"></ul>
+
+        <div id="no-points" class="empty-state" role="status" hidden>
+          <h3>No help points listed</h3>
+          <p>No help points are configured for this event.</p>
+        </div>
+        <div id="no-open-points" class="empty-state" role="status" hidden>
+          <h3>No help points open now</h3>
+          <p>
+            No listed help points match the configured opening hours right now.
+            Try again later or turn off the Open now filter.
+          </p>
+        </div>
+      </section>
+
+      <section
+        id="help-point-details"
+        class="details-card"
+        aria-labelledby="details-title"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <h2 id="details-title">Help point details</h2>
+        <p id="details-prompt">Select a help point to see its details.</p>
+      </section>
+
+      <p class="footer-note">
+        This feature does not use maps, location permissions, or external
+        services. In an emergency, call <a href="tel:112">112</a>.
+      </p>
+    </main>
+    <noscript>
+      <p class="script-warning">
+        Enable JavaScript to view the fictional help-point demo.
+      </p>
+    </noscript>
+  </body>
+</html>

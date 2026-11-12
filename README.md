@@ -131,6 +131,51 @@ tot de locatie pas na acceptatie autoriseert.
    available** en de aanvraag blijft werken. Als Leaflet zelf niet beschikbaar
    is, meldt de kaart **Map preview unavailable**.
 
+## Help points (user story 12)
+
+The overview has an independent **Find Help Points** action. The help-points
+page lists three fictional example points around real landmarks on
+Stratumseind, Eindhoven: Catharinaplein near St. Catharine's Church, the
+central intersection with 't College, and Dommelbrug near the Dommel and
+Stratumsedijk. These descriptions orient the examples only; no church, bar,
+or business is represented as providing assistance, and no exact building
+address is specified. Selecting a point shows its location description,
+demo schedule, directions, and landmarks. The illustrative Friday/Saturday
+night schedules differ between points and are **not verified opening hours**.
+**Open now** uses the configured weekday hours and the device's local date
+and time; overnight hours, full-day closures, and date-time closure periods
+are supported. The displayed open status refreshes once per minute. This
+feature never requests location and does not use maps, external APIs, a
+backend, or browser storage.
+
+All current entries are clearly labelled demo data and are **not real,
+staffed, or safe locations**. They must not be used to find real-world help.
+Before using this feature for an actual event, the client must verify each
+specific position, staffing, directions, landmarks, schedule, and closures,
+and must confirm that an exact public location description is appropriate.
+Only replace the demo in `help-points-data.js` with details explicitly
+confirmed by the event client and responsible organiser. Keep the fictional
+data warning until all information and operational claims are confirmed.
+Each point needs a unique `id`, `name`, `location`, `directions`,
+at least one `landmarks` entry, `openingHours`, `closedDates`, and
+`closedPeriods`. Opening-hour `days` use Sunday `0` through Saturday `6`;
+`opens` and `closes` use 24-hour `HH:MM` device-local time. A closing time
+earlier than or equal to an opening time means the range ends the next day
+(equal times are rejected by validation). Full-day closure dates use
+`YYYY-MM-DD`; closed periods use local `YYYY-MM-DDTHH:mm` start and end values,
+with the end excluded. The page validates its data at startup.
+
+The status is derived from static configured hours and closures, not a live
+staffing feed. Device clock and time-zone settings affect **Open now**; the
+page cannot confirm that a fictional or later client-confirmed point is
+actually staffed or available. Replace demo entries only after client
+confirmation and arrange a process to keep published schedules current.
+
+Automated checks run with `node help-points.test.cjs`. They cover schedule
+boundaries, midnight crossing, day/date closures, validation, list filtering,
+empty states, selection details, navigation, and the absence of geolocation
+requests. Include the test in the complete JavaScript suite below.
+
 ## NFC-polsbanden (user story 7)
 
 Een beheerder programmeert NTAG213-polsbanden vanuit `wristbands.html`.
@@ -258,10 +303,13 @@ Met Node.js geïnstalleerd:
 node app.test.cjs
 node volunteer.test.cjs
 node wristbands.test.cjs
+node help-points.test.cjs
 node --check app.js
 node --check volunteer.js
 node --check request-store.js
 node --check approximate-map.js
+node --check help-points.js
+node --check help-points-data.js
 ```
 
 Voor de brug (in `nfc/bridge`, met de venv actief):
@@ -282,6 +330,10 @@ geen gebruikerstest op een echte telefoon.
 - `app.js`: vier statussen, twee acties en één ontvangsttimer.
 - `approximate-map.js`: gedeelde Leaflet-kaart met een geografische onzekerheidscirkel.
 - `app.test.cjs`: reproduceerbare controles zonder extra dependencies.
+- `help-points.html`, `help-points.css`, `help-points-data.js`, and
+  `help-points.js`: fictional, event-specific help-point list and local-hours
+  filter, isolated from the request and volunteer flows.
+- `help-points.test.cjs`: schedule and interface checks without dependencies.
 
 De code bevat Nederlandse uitleg en korte, verticaal opgemaakte regels.
 `render()` past tekst en zichtbaarheid aan; eventhandlers veranderen de
