@@ -15,7 +15,10 @@ const requestLocationMap = document.querySelector("#request-location-map");
 const requestLocationLabel = document.querySelector("#request-location-label");
 const soundToggle = document.querySelector("#sound-toggle");
 const soundToggleLabel = document.querySelector("#sound-toggle-label");
+const languageSelect = document.querySelector("#language-select");
 const requestStore = globalThis.LinkedRequestStore;
+const i18n = globalThis.LinkedI18n;
+const t = i18n.t;
 
 let activeRequest = requestStore.getRequest();
 let requestStatus = getStatusFromRequest(activeRequest);
@@ -26,15 +29,33 @@ let locationAttempt = 0;
 let locationPending = false;
 const receiptDelay = 1500;
 
+// Returns a translation key, so the text can follow the selected language.
 function getLocationFeedback(request) {
   if (request && request.approximateLocation) {
     return request.status === "accepted"
-      ? "Approximate area shared with your volunteer."
-      : "Approximate area ready to share after acceptance.";
+      ? "location.feedback.shared"
+      : "location.feedback.ready";
   }
   return request && request.status === "accepted"
-    ? "No location was shared for this request."
-    : "Location sharing is off.";
+    ? "location.feedback.noneShared"
+    : "location.feedback.off";
+}
+
+let locationFeedbackKey = getLocationFeedback(activeRequest);
+
+function setLocationFeedback(key) {
+  locationFeedbackKey = key;
+  locationFeedback.textContent = t(key);
+}
+
+// Place names come from the map service; only the "Near" prefix is translated.
+function getLocationLabelText(location) {
+  const label = location && location.label;
+  if (!label) {
+    return t("location.labelDefault");
+  }
+  const match = /^Near (.+)$/.exec(label);
+  return match ? t("location.near", { place: match[1] }) : label;
 }
 
 function getApproximateLabel(properties) {
@@ -72,13 +93,7 @@ function renderLocationPreview(location) {
   const hasLocation = Boolean(location);
   requestLocationPreview.hidden = !hasLocation;
   requestStoreMap(location);
-  if (!hasLocation) {
-    requestLocationLabel.textContent = "Approximate location available";
-    return;
-  }
-
-  requestLocationLabel.textContent =
-    location.label || "Approximate location available";
+  requestLocationLabel.textContent = getLocationLabelText(location);
 }
 
 function requestStoreMap(location) {
@@ -126,35 +141,8 @@ async function resolveApproximateLocationLabel(requestId, attempt, location) {
   }
 }
 
-locationFeedback.textContent = getLocationFeedback(activeRequest);
+setLocationFeedback(locationFeedbackKey);
 renderLocationPreview(activeRequest && activeRequest.approximateLocation);
-
-const statusMessages = {
-  idle: {
-    title: "No active request",
-    description: "You haven’t asked for help yet.",
-  },
-  sent: {
-    title: "Request sent (demo)",
-    description:
-      "Waiting for a simulated receipt confirmation.",
-  },
-  received: {
-    title: "Receipt simulated (demo)",
-    description:
-      "Your request is available to volunteers in this demo inbox.",
-  },
-  accepted: {
-    title: "A volunteer is on the way",
-    description:
-      "Your request has been accepted. A volunteer is on the way.",
-  },
-  cancelled: {
-    title: "Request cancelled",
-    description:
-      "Your request has stopped. You can ask for help again.",
-  },
-};
 
 const sounds = {
   press: [[660, 0]],
@@ -240,9 +228,11 @@ function startRequest() {
   requestStatus = "sent";
   locationPending = shareLocation.checked;
   renderLocationPreview(activeRequest.approximateLocation);
-  locationFeedback.textContent = shareLocation.checked
-    ? "Waiting for location permission…"
-    : "Location not shared. Your request was sent without it.";
+  setLocationFeedback(
+    shareLocation.checked
+      ? "location.feedback.waiting"
+      : "location.feedback.sentWithout",
+  );
   playSound("sent");
   render();
 
@@ -272,8 +262,7 @@ function requestLocation(requestId, attempt) {
   if (!geolocation) {
     locationPending = false;
     shareLocation.checked = false;
-    locationFeedback.textContent =
-      "Location isn’t available in this browser. Your request was still sent.";
+    setLocationFeedback("location.feedback.unsupported");
     render();
     return;
   }
@@ -292,13 +281,12 @@ function requestLocation(requestId, attempt) {
       });
       if (!request) {
         shareLocation.checked = false;
-        locationFeedback.textContent =
-          "Approximate location couldn’t be saved. Your request is still active.";
+        setLocationFeedback("location.feedback.saveFailed");
         render();
         return;
       }
 
-      locationFeedback.textContent = getLocationFeedback(request);
+      setLocationFeedback(getLocationFeedback(request));
       renderLocationPreview(request.approximateLocation);
       render();
       resolveApproximateLocationLabel(requestId, attempt, request.approximateLocation);
@@ -311,14 +299,11 @@ function requestLocation(requestId, attempt) {
       locationPending = false;
       shareLocation.checked = false;
       if (error.code === 1) {
-        locationFeedback.textContent =
-          "Location permission was denied. Your request was still sent without it.";
+        setLocationFeedback("location.feedback.denied");
       } else if (error.code === 3) {
-        locationFeedback.textContent =
-          "Finding your location timed out. Your request was still sent without it.";
+        setLocationFeedback("location.feedback.timeout");
       } else {
-        locationFeedback.textContent =
-          "Your location couldn’t be found. Your request was still sent without it.";
+        setLocationFeedback("location.feedback.notFound");
       }
       render();
     },
@@ -338,8 +323,7 @@ function continueWithoutLocation() {
   locationAttempt += 1;
   locationPending = false;
   shareLocation.checked = false;
-  locationFeedback.textContent =
-    "Location sharing was stopped. Your request is still active without it.";
+  setLocationFeedback("location.feedback.stopped");
   render();
 }
 
@@ -365,13 +349,12 @@ function cancelRequest() {
   locationAttempt += 1;
   locationPending = false;
   shareLocation.checked = false;
-  locationFeedback.textContent =
-    "Location sharing was stopped. No location was saved.";
+  setLocationFeedback("location.feedback.cancelled");
   const cancelledRequest = requestStore.cancelRequest(activeRequest.id);
   if (!cancelledRequest) {
     activeRequest = requestStore.getRequest();
     requestStatus = getStatusFromRequest(activeRequest);
-    locationFeedback.textContent = getLocationFeedback(activeRequest);
+    setLocationFeedback(getLocationFeedback(activeRequest));
     renderLocationPreview(
       activeRequest && activeRequest.approximateLocation,
     );
@@ -389,27 +372,32 @@ function cancelRequest() {
 
 function render() {
   const active = isRequestActive();
-  const message = statusMessages[requestStatus];
 
   requestStatusPanel.hidden = requestStatus === "idle";
-  statusTitle.textContent = message.title;
-  statusDescription.textContent = message.description;
+  statusTitle.textContent = t(`status.${requestStatus}.title`);
+  statusDescription.textContent = t(`status.${requestStatus}.description`);
   requestButton.hidden = active;
   requestButton.disabled = active;
   cancelButton.hidden = !active;
   cancelButton.disabled = !active;
   shareLocation.disabled = active;
   locationWithoutButton.hidden = !locationPending;
-  locationChoiceState.textContent = shareLocation.checked ? "ON" : "OFF";
-  requestButtonLabel.textContent = requestStatus === "cancelled"
-    ? "Ask for help again"
-    : "Ask for help";
+  locationChoiceState.textContent = t(
+    shareLocation.checked ? "location.state.on" : "location.state.off",
+  );
+  requestButtonLabel.textContent = t(
+    requestStatus === "cancelled" ? "request.again" : "request.button",
+  );
 
   soundToggle.setAttribute("aria-pressed", String(soundEnabled));
-  soundToggleLabel.textContent = soundEnabled ? "Sound on" : "Sound off";
+  soundToggleLabel.textContent = t(soundEnabled ? "sound.on" : "sound.off");
 }
 
 globalThis.addEventListener("storage", (event) => {
+  if (event.key === i18n.storageKey) {
+    i18n.reload();
+    return;
+  }
   if (event.key !== requestStore.storageKey) {
     return;
   }
@@ -420,7 +408,7 @@ globalThis.addEventListener("storage", (event) => {
   const previousRequestId = activeRequest && activeRequest.id;
   activeRequest = requestStore.getRequest();
   requestStatus = getStatusFromRequest(activeRequest);
-  locationFeedback.textContent = getLocationFeedback(activeRequest);
+  setLocationFeedback(getLocationFeedback(activeRequest));
   renderLocationPreview(
     activeRequest && activeRequest.approximateLocation,
   );
@@ -440,10 +428,31 @@ requestButton.addEventListener("click", startRequest);
 cancelButton.addEventListener("click", cancelRequest);
 locationWithoutButton.addEventListener("click", continueWithoutLocation);
 shareLocation.addEventListener("change", () => {
-  locationFeedback.textContent = shareLocation.checked
-    ? "Your browser will ask for permission after you ask for help."
-    : "Location sharing is off.";
+  setLocationFeedback(
+    shareLocation.checked
+      ? "location.feedback.willAsk"
+      : "location.feedback.off",
+  );
   render();
 });
 soundToggle.addEventListener("click", toggleSound);
+
+// Language switching only redraws text. It never touches the request, the
+// timers, the location choice or the checkbox, so nothing is submitted,
+// cancelled or duplicated.
+function refreshLanguageText() {
+  languageSelect.value = i18n.getLanguage();
+  locationFeedback.textContent = t(locationFeedbackKey);
+  const storedRequest = requestStore.getRequest();
+  requestLocationLabel.textContent = getLocationLabelText(
+    storedRequest && storedRequest.approximateLocation,
+  );
+  render();
+}
+
+i18n.onChange(refreshLanguageText);
+languageSelect.addEventListener("change", () => {
+  i18n.setLanguage(languageSelect.value);
+});
+languageSelect.value = i18n.getLanguage();
 render();

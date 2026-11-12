@@ -10,6 +10,9 @@
     <link rel="stylesheet" href="styles.css" />
     <title>Linked | Ask for help</title>
 
+    <script src="i18n/en.js" defer></script>
+    <script src="i18n/nl.js" defer></script>
+    <script src="i18n/i18n.js" defer></script>
     <script src="request-store.js" defer></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
@@ -27,23 +30,38 @@
           Find Help Points
         </a>
       </nav>
-      <span class="demo-label">Demo</span>
+      <div class="header-tools">
+        <label class="language-picker" for="language-select">
+          <span class="language-picker-label">Language / Taal</span>
+          <select id="language-select" name="language">
+            <option value="en">English</option>
+            <option value="nl">Nederlands</option>
+          </select>
+        </label>
+        <span class="demo-label" data-i18n="header.demo">Demo</span>
+      </div>
     </header>
 
     <main>
       <section class="help-card" aria-labelledby="page-title">
-        <h1 id="page-title">Need help?</h1>
-        <p class="help-instruction">Tap once to ask for help.</p>
+        <h1 id="page-title" data-i18n="help.title">Need help?</h1>
+        <p class="help-instruction" data-i18n="help.instruction">
+          Tap once to ask for help.
+        </p>
 
         <div class="location-option">
           <label class="location-choice" for="share-location">
             <input id="share-location" type="checkbox" />
-            <span>Share approximate location</span>
+            <span data-i18n="location.share">Share approximate location</span>
             <span id="location-choice-state" class="location-choice-state">
               OFF
             </span>
           </label>
-          <p id="location-help" class="location-help">
+          <p
+            id="location-help"
+            class="location-help"
+            data-i18n="location.help"
+          >
             Optional. Approximate area shared after acceptance. Map services
             receive rounded location data.
           </p>
@@ -59,6 +77,7 @@
           <section
             id="request-location-preview"
             class="location-preview"
+            data-i18n-aria-label="location.previewAria"
             aria-label="Approximate location preview"
             hidden
           >
@@ -66,6 +85,7 @@
               id="request-location-map"
               class="location-map"
               role="img"
+              data-i18n-aria-label="location.mapAria"
               aria-label="Map showing the approximate request area"
             ></div>
             <p class="location-label">
@@ -78,6 +98,7 @@
             id="location-without-button"
             class="secondary"
             type="button"
+            data-i18n="location.withoutButton"
             hidden
           >
             Ask for help without location
@@ -97,6 +118,7 @@
           id="cancel-button"
           class="secondary"
           type="button"
+          data-i18n="request.cancel"
           hidden
         >
           Cancel request
@@ -118,19 +140,20 @@
 
 
         <p id="demo-notice" class="demo-note">
-          Demo only. No real request is sent. In an emergency, call
-          <a href="tel:112">112</a>.
+          <span data-i18n="demo.noteBefore">Demo only. No real request is sent. In an emergency, call </span><a href="tel:112">112</a><span data-i18n="demo.noteAfter">.</span>
         </p>
         <noscript>
           <p class="script-warning">
             Enable JavaScript to use the help button.
             Without JavaScript, no request will be started.
+            / Schakel JavaScript in om de hulpknop te gebruiken.
+            Zonder JavaScript wordt geen verzoek gestart.
           </p>
         </noscript>
       </section>
 
       <details class="settings">
-        <summary>Sound settings</summary>
+        <summary data-i18n="settings.summary">Sound settings</summary>
         <div class="settings-content">
           <button
             id="sound-toggle"

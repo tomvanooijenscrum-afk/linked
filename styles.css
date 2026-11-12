@@ -27,7 +27,8 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 8px 16px;
 }
 .help-points-link {
   display: inline-flex;
@@ -299,4 +300,69 @@ summary { min-height: 48px; padding: 12px 4px; cursor: pointer; }
   color: var(--green);
   font-size: 14px;
   font-weight: 600;
+}
+
+/* Language selector and text that must survive longer Dutch wording */
+.header-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.language-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.language-picker select {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #9cae91;
+  border-radius: 6px;
+  background: white;
+  color: var(--green);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.language-picker select:focus-visible {
+  outline: 3px solid #183e37;
+  outline-offset: 2px;
+}
+
+.primary,
+.secondary,
+.status-banner,
+.location-choice span,
+.location-help,
+.location-feedback,
+.location-label {
+  overflow-wrap: anywhere;
+}
+
+.primary > span:first-child {
+  min-width: 0;
+  text-align: center;
+}
+
+.location-choice span:first-of-type {
+  min-width: 0;
+}
+
+.location-choice-state {
+  flex: none;
+}
+
+@media (max-width: 359px) {
+  .header-tools { justify-content: flex-start; }
+  .language-picker-label { font-size: 13px; }
+  .primary { gap: 10px; padding: 12px; }
 }
