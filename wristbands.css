@@ -1,58 +1,229 @@
-.inbox-card + .inbox-card {
+.inbox-card + .inbox-card,
+#admin-area > .inbox-card + .inbox-card {
   margin-top: 20px;
 }
 
 .button-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
 }
 
-.base-url-form {
+/* ---- Kop en meldingen ---- */
+
+.signed-in {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.link-button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.page-message {
+  margin: 0 0 20px;
+  border: 1px solid #d9a3a3;
+  border-radius: 10px;
+  padding: 12px 16px;
+  background: #fbeeee;
+  color: #7a2121;
+}
+
+.field-error {
+  margin: 8px 0 0;
+  color: #9b2c2c;
+  font-size: 14px;
+}
+
+/* ---- Formulieren ---- */
+
+.stacked-form,
+.event-row,
+.search-row {
   margin-top: 16px;
 }
 
-.base-url-form label {
+.stacked-form label,
+.event-row label,
+.search-row label {
+  display: block;
+  margin-top: 12px;
   font-size: 14px;
   font-weight: 600;
 }
 
-.base-url-row {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
-}
-
-.base-url-row input {
-  flex: 1;
+.stacked-form input,
+.event-row input,
+.event-row select,
+.search-row input,
+.search-row select {
+  width: 100%;
   min-width: 0;
-  min-height: 56px;
-  margin-top: 8px;
+  min-height: 48px;
+  margin-top: 6px;
   border: 1px solid #9cae91;
   border-radius: 10px;
-  padding: 0 16px;
+  padding: 0 14px;
+  background: #fff;
   color: var(--green);
   font: inherit;
 }
 
-.base-url-row input:focus-visible {
+.stacked-form input:focus-visible,
+.event-row input:focus-visible,
+.event-row select:focus-visible,
+.search-row input:focus-visible,
+.search-row select:focus-visible {
   outline: 3px solid #769a40;
   outline-offset: 2px;
 }
 
-.base-url-row .secondary {
-  width: auto;
+.event-row,
+.search-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: end;
 }
 
-.field-hint {
-  margin: 8px 0 0;
+.search-row {
+  grid-template-columns: 2fr 1fr;
+}
+
+.inline-field {
+  display: flex;
+  gap: 8px;
+}
+
+.inline-field .secondary {
+  width: auto;
+  min-height: 48px;
+  margin: 6px 0 0;
+}
+
+/* ---- Lezerstatus: tekst én vorm, niet alleen kleur ---- */
+
+.reader-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 4px 12px;
+  background: #eef1ea;
   font-size: 13px;
+  font-weight: 600;
+}
+
+.reader-pill::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border: 2px solid currentColor;
+}
+
+.reader-pill[data-state="connected"] {
+  background: #e3efd2;
+}
+
+.reader-pill[data-state="connected"]::before {
+  border-radius: 50%;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.reader-pill[data-state="connecting"]::before {
+  border-radius: 50%;
+  border-right-color: transparent;
+}
+
+.tag-details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 16px 0 0;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  font-size: 14px;
+}
+
+.tag-details dt {
+  font-weight: 600;
+}
+
+.tag-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---- Registratiestappen ---- */
+
+.step-list {
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.step-list li {
+  position: relative;
+  padding: 6px 0 6px 34px;
+  color: var(--muted);
+  counter-increment: step;
+}
+
+.step-list li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #9cae91;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+}
+
+.step-list li[data-state="active"] {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.step-list li[data-state="active"]::before {
+  border: 2px solid var(--green);
+}
+
+.step-list li[data-state="done"] {
+  color: var(--green);
+}
+
+.step-list li[data-state="done"]::before {
+  content: "✓";
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.step-list li[data-state="failed"] {
+  color: #9b2c2c;
+  font-weight: 600;
+}
+
+.step-list li[data-state="failed"]::before {
+  content: "!";
+  border: 2px solid #9b2c2c;
 }
 
 .wristband-url {
   overflow-wrap: anywhere;
   font-family: ui-monospace, "SFMono-Regular", monospace;
+  font-size: 14px;
 }
+
+/* ---- Lijst ---- */
 
 .wristband-list {
   margin: 16px 0 0;
@@ -80,6 +251,11 @@
   font-weight: 600;
 }
 
+.wristband-item[data-status="inactive"] .wristband-token,
+.wristband-item[data-status="failed"] .wristband-token {
+  color: var(--muted);
+}
+
 .wristband-item .secondary {
   width: auto;
   min-height: 44px;
@@ -88,7 +264,9 @@
 }
 
 @media (max-width: 760px) {
-  .button-row {
+  .button-row,
+  .event-row,
+  .search-row {
     grid-template-columns: 1fr;
     gap: 0;
   }
@@ -98,4 +276,10 @@
     flex-direction: column;
     gap: 8px;
   }
+}
+
+/* Uitgeschakelde knoppen moeten er ook zo uitzien (bijv. zonder lezer). */
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.45;
 }

@@ -219,6 +219,19 @@ h2 {
   font-size: 14px;
 }
 
+/* Melding na het aantikken van een polsbandje (wristband-tap.js). */
+.wristband-notice {
+  margin: 16px 0 0;
+  border-left: 4px solid #8aab54;
+}
+
+.wristband-notice[data-state="inactive"],
+.wristband-notice[data-state="unknown"],
+.wristband-notice[data-state="offline"] {
+  border-left-color: #9cae91;
+  background: #f1f3ee;
+}
+
 .request-map {
   margin: 20px 0 0;
 }

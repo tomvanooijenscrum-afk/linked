@@ -7,10 +7,14 @@
       content="width=device-width, initial-scale=1.0"
     />
     <meta name="theme-color" content="#183e37" />
+    <!-- Een polsbandjeslink bevat een token: nooit als referrer doorgeven. -->
+    <meta name="referrer" content="no-referrer" />
     <title>Linked | Ask for help</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="request-store.js" defer></script>
     <script src="app.js" defer></script>
+    <script src="wristband-api.js" defer></script>
+    <script src="wristband-tap.js" defer></script>
   </head>
   <body>
     <header>
@@ -45,6 +49,17 @@
         </div>
         <h2 id="request-title">Need help?</h2>
         <p>You can reach out, even if you’re not sure.</p>
+
+        <div
+          id="wristband-notice"
+          class="status-banner wristband-notice"
+          role="status"
+          aria-live="polite"
+          hidden
+        >
+          <strong id="wristband-notice-title"></strong>
+          <p id="wristband-notice-text"></p>
+        </div>
 
         <button id="request-button" class="primary" type="button">
           <span id="request-button-label">Ask for help</span>
