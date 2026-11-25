@@ -251,6 +251,40 @@ tikken; elke tik wordt een hypothetisch verzoek op de kaart. **Alle
 locaties zijn hypothetisch.** De verzoeken staan in `tap-request-store.js`
 (`linked.tap-requests.v1`, maximaal 20).
 
+### Hosting op Vercel
+
+De webapp en de backend draaien samen op Vercel, op hetzelfde adres:
+
+- De pagina's (`*.html`, `*.css`, `*.js`) worden bij het bouwen naar
+  `public/` gekopieerd en statisch geserveerd. `server/` is dus niet te
+  downloaden.
+- Alles onder `/api/` gaat naar `api/index.py`, die de Flask-app uit
+  `server/app.py` start.
+- De database is Postgres (Neon, via de Vercel Marketplace). Lokaal blijft
+  het SQLite. `server/db.py` kiest op basis van het adres; het Postgres-schema
+  staat in `server/migrations/postgres/`. Migraties draaien bij het starten.
+
+Omgevingsvariabelen in het Vercel-project:
+
+| Variabele | Waarde |
+| --- | --- |
+| `DATABASE_URL` | zet de Neon-integratie zelf |
+| `LINKED_SECRET_KEY` | lange willekeurige sleutel (verplicht op Vercel) |
+| `LINKED_PUBLIC_BASE_URL` | het https-adres van de site, bv. `https://linked-mu-jet.vercel.app` |
+| `LINKED_SECURE_COOKIES` | `1` |
+
+Een beheerder aanmaken in de Neon-database (vanuit `linked`):
+
+```sh
+vercel env pull .env.production --environment=production
+export $(grep DATABASE_URL .env.production | xargs)
+server/.venv/bin/python -m server.manage create-user <naam>
+rm .env.production
+```
+
+Let op: de inlogbeperking (5 pogingen per 15 minuten) wordt per
+serverless-instantie bijgehouden en is op Vercel dus minder streng.
+
 ### Wat nog ontbreekt (bewust niet verzonnen)
 
 - **Publieke HTTPS-hosting.** Telefoons moeten de server kunnen bereiken.

@@ -9,15 +9,15 @@ Zie server/README.md voor configuratie en beheerdersaccounts.
 import os
 import re
 import secrets
-import sqlite3
 import time
 from functools import wraps
 from pathlib import Path
 
 from flask import Flask, abort, current_app, g, jsonify, request, send_from_directory, session
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from . import wristbands
-from .db import close_db, get_db, migrate
+from .db import IntegrityError, close_db, get_db, is_postgres, migrate
 from .passwords import verify_password
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -30,10 +30,22 @@ LOGIN_WINDOW = 15 * 60
 LOGIN_MAX_FAILURES = 5
 
 
+def database_url():
+    # DATABASE_URL zet de Neon-integratie van Vercel zelf.
+    return (
+        os.getenv("LINKED_DATABASE")
+        or os.getenv("DATABASE_URL")
+        or str(INSTANCE / "linked.sqlite3")
+    )
+
+
 def load_secret_key():
     key = os.getenv("LINKED_SECRET_KEY")
     if key:
         return key
+    if os.getenv("VERCEL"):
+        # Op Vercel is de schijf alleen-lezen en per functie anders.
+        raise RuntimeError("Set LINKED_SECRET_KEY in the Vercel project settings.")
     # Ontwikkeling: één keer een willekeurige sleutel maken en bewaren.
     INSTANCE.mkdir(exist_ok=True)
     path = INSTANCE / "secret_key"
@@ -46,7 +58,7 @@ def load_secret_key():
 def create_app(config=None):
     app = Flask(__name__, static_folder=None)
     app.config.update(
-        DATABASE=os.getenv("LINKED_DATABASE", str(INSTANCE / "linked.sqlite3")),
+        DATABASE=database_url(),
         PUBLIC_BASE_URL=os.getenv("LINKED_PUBLIC_BASE_URL", ""),
         SESSION_COOKIE_NAME="linked_session",
         SESSION_COOKIE_HTTPONLY=True,
@@ -60,8 +72,14 @@ def create_app(config=None):
     if not app.config.get("SECRET_KEY"):
         app.config["SECRET_KEY"] = load_secret_key()
 
-    Path(app.config["DATABASE"]).parent.mkdir(parents=True, exist_ok=True)
+    if not is_postgres(app.config["DATABASE"]):
+        Path(app.config["DATABASE"]).parent.mkdir(parents=True, exist_ok=True)
     migrate(app.config["DATABASE"])
+
+    if os.getenv("VERCEL") or os.getenv("LINKED_BEHIND_PROXY") == "1":
+        # Achter de proxy van Vercel: echte https-adres en IP van de bezoeker,
+        # nodig voor de Origin-controle en de inlogbeperking.
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     app.teardown_appcontext(close_db)
     app.extensions["login_failures"] = {}
@@ -211,13 +229,13 @@ def register_routes(app):
             return api_error("INVALID_EVENT_NAME", 400)
         db = get_db()
         try:
-            cursor = db.execute(
-                "INSERT INTO events (name, created_at) VALUES (?, ?)",
+            event_id = db.execute(
+                "INSERT INTO events (name, created_at) VALUES (?, ?) RETURNING id",
                 (name.strip(), wristbands.now()),
-            )
-        except sqlite3.IntegrityError:
+            ).fetchone()[0]
+        except IntegrityError:
             return api_error("DUPLICATE_EVENT", 409)
-        return jsonify({"ok": True, "event": {"id": cursor.lastrowid, "name": name.strip()}}), 201
+        return jsonify({"ok": True, "event": {"id": event_id, "name": name.strip()}}), 201
 
     # ---- Polsbanden (alleen beheerders) ---------------------------------
 

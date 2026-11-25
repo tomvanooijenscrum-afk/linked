@@ -1,7 +1,10 @@
-# Alleen de statische webapp naar Vercel; backend en firmware blijven lokaal.
-server/
+# De backend gaat mee als functie (api/index.py); firmware en tests niet.
 nfc/
+server/.venv/
+server/instance/
+server/test_server.py
 *.test.cjs
 *.md
 .vscode/
 .prettierrc.json
+public/

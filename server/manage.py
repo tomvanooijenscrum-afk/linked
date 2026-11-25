@@ -12,11 +12,10 @@ server zelf aangemaakt.
 import argparse
 import getpass
 import os
-import sqlite3
 import sys
 
-from .app import INSTANCE
-from .db import connect, migrate
+from .app import database_url
+from .db import IntegrityError, connect, is_postgres, migrate
 from .passwords import hash_password
 from .wristbands import now
 
@@ -25,8 +24,9 @@ ROLES = ("admin", "volunteer")
 
 
 def database_path():
-    path = os.getenv("LINKED_DATABASE", str(INSTANCE / "linked.sqlite3"))
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    path = database_url()
+    if not is_postgres(path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
     return path
 
 
@@ -68,7 +68,7 @@ def main(argv=None):
                     " VALUES (?, ?, ?, ?)",
                     (args.username, password_hash, args.role, now()),
                 )
-            except sqlite3.IntegrityError:
+            except IntegrityError:
                 sys.exit("That username already exists or is invalid (3-40 characters).")
             print(f"Created {args.role} '{args.username}'.")
         elif args.command == "set-role":

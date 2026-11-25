@@ -1,0 +1,3 @@
+# Voor Vercel (api/index.py). Lokaal: server/requirements.txt.
+flask>=3.0
+psycopg[binary]>=3.2
