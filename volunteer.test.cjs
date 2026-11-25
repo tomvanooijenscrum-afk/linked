@@ -1,45 +1,31 @@
+// Test van de vrijwilligerspagina (volunteer.js) met meerdere apparaten
+// tegen één gedeelde nep-backend.
+//   node volunteer.test.cjs
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
 const path = require("node:path");
+const { createFakeServer } = require("./test-fake-server.cjs");
 
-const source = fs.readFileSync(path.join(__dirname, "volunteer.js"), "utf8");
-const storeSource = fs.readFileSync(
-  path.join(__dirname, "request-store.js"),
-  "utf8",
-);
-const tapStoreSource = fs.readFileSync(
-  path.join(__dirname, "tap-request-store.js"),
-  "utf8",
-);
-const mapSource = fs.readFileSync(
-  path.join(__dirname, "request-map.js"),
-  "utf8",
-);
-const html = fs.readFileSync(
-  path.join(__dirname, "volunteer.html"),
-  "utf8",
-);
+const read = (name) => fs.readFileSync(path.join(__dirname, name), "utf8");
+const source = read("volunteer.js");
+const storeSource = read("request-store.js");
+const apiSource = read("wristband-api.js");
+const geoSource = read("geo.js");
+const mapSource = read("request-map.js");
+const html = read("volunteer.html");
+
+const settle = async () => {
+  for (let i = 0; i < 5; i += 1) await new Promise((resolve) => setImmediate(resolve));
+};
 
 function createStorage() {
   const values = new Map();
   return {
-    getItem(key) {
-      return values.has(key) ? values.get(key) : null;
-    },
-    setItem(key, value) {
-      values.set(key, value);
-    },
+    getItem: (key) => (values.has(key) ? values.get(key) : null),
+    setItem: (key, value) => values.set(key, value),
+    removeItem: (key) => values.delete(key),
   };
-}
-
-function loadTapStore(storage) {
-  const context = vm.createContext({
-    localStorage: storage,
-    crypto: globalThis.crypto,
-  });
-  vm.runInContext(tapStoreSource, context);
-  return context.LinkedTapRequestStore;
 }
 
 function createElement() {
@@ -48,6 +34,7 @@ function createElement() {
     hidden: false,
     disabled: false,
     focused: false,
+    value: "",
     className: "",
     dataset: {},
     attributes: {},
@@ -82,535 +69,288 @@ function createLeaflet() {
     };
     return target;
   };
-  const leaflet = {
+  return {
     markers,
-    map: () => ({
-      setView() {},
-      invalidateSize() {},
-      fitBounds(points) {
-        leaflet.bounds = points;
-      },
-    }),
+    map: () => ({ setView() {}, invalidateSize() {}, fitBounds() {} }),
     tileLayer: () => chain({}),
-    layerGroup: () =>
-      chain({
-        clearLayers() {
-          markers.length = 1;
-        },
-      }),
+    layerGroup: () => chain({ clearLayers: () => (markers.length = 1) }),
     circleMarker(position, options) {
       const marker = chain({ position, options });
       markers.push(marker);
       return marker;
     },
   };
-  return leaflet;
 }
 
-function loadStore(storage) {
-  const context = vm.createContext({ localStorage: storage });
-  vm.runInContext(storeSource, context);
-  return context.LinkedRequestStore;
-}
+const ids = [
+  "page-message", "signed-in-as", "sign-out", "signin-card", "signin-form",
+  "signin-username", "signin-password", "signin-error", "signin-submit",
+  "volunteer-area", "availability-card", "availability-toggle", "availability-value",
+  "availability-hint", "nearby-status", "requests-map", "tap-request-list",
+  "clear-tap-requests", "tap-alert", "tap-alert-text", "dismiss-tap-alert",
+  "reader-status",
+];
 
-// Nep-brug: geeft de antwoorden op volgorde terug; zonder antwoord offline.
-function createBridge(responses = []) {
-  const urls = [];
-  async function fetch(url) {
-    urls.push(url);
-    if (responses.length === 0) {
-      throw new TypeError("Failed to fetch");
-    }
-    const next = responses.shift();
-    return { json: async () => next };
-  }
-  return { urls, fetch };
-}
-
-function setup(
-  storage = createStorage(),
-  bridgeResponses = [],
-  leaflet = undefined,
-) {
-  const selectors = [
-    "#inbox-status",
-    "#availability-card",
-    "#availability-toggle",
-    "#availability-value",
-    "#availability-hint",
-    "#pending-request",
-    "#accepted-request",
-    "#empty-state",
-    "#unavailable-state",
-    "#request-received",
-    "#open-request",
-    "#request-details",
-    "#accept-request",
-    "#nearby-status",
-    "#requests-map",
-    "#tap-request-list",
-    "#clear-tap-requests",
-    "#tap-alert",
-    "#tap-alert-text",
-    "#dismiss-tap-alert",
-    "#reader-status",
-  ];
+// Eén browser op één apparaat.
+async function openPage(server, { hostname = "linked-mu-jet.vercel.app", bridge = null } = {}) {
   const elements = new Map();
-  const globalListeners = {};
-
-  for (const selector of selectors) {
-    assert.ok(html.includes(`id="${selector.slice(1)}"`));
+  for (const id of ids) {
+    assert.ok(html.includes(`id="${id}"`), `volunteer.html mist #${id}`);
     const element = createElement();
-    element.hidden = [
-      "#pending-request",
-      "#accepted-request",
-      "#request-details",
-      "#unavailable-state",
-      "#tap-alert",
-    ].includes(selector);
-    elements.set(selector, element);
+    element.hidden = ["signin-card", "volunteer-area", "tap-alert", "page-message"].includes(id);
+    elements.set(id, element);
   }
 
-  const bridge = createBridge(bridgeResponses);
-  let pollTimer = null;
+  const device = server.device();
+  const bridgeCalls = [];
+  async function fetch(url, init) {
+    if (String(url).startsWith("http://127.0.0.1:5001")) {
+      bridgeCalls.push(url);
+      if (!bridge) throw new TypeError("Failed to fetch");
+      return { json: async () => bridge.shift() ?? { reader: "listening", taps: [], latest: 9 } };
+    }
+    return device.fetch(url, init);
+  }
+
+  const timers = [];
+  const leaflet = createLeaflet();
+  const document = {
+    visibilityState: "visible",
+    getElementById: (id) => {
+      assert.ok(elements.has(id), `Onbekend element: #${id}`);
+      return elements.get(id);
+    },
+    createElement,
+    addEventListener() {},
+  };
   const context = vm.createContext({
-    localStorage: storage,
-    crypto: globalThis.crypto,
+    localStorage: createStorage(),
+    location: { hostname },
+    fetch,
     L: leaflet,
-    fetch: bridge.fetch,
-    setInterval(callback) {
-      pollTimer = callback;
+    document,
+    console: { error: (...args) => String(args[0]).startsWith("Could not reach") || console.error(...args) },
+    Intl,
+    Date,
+    addEventListener() {},
+    setTimeout(callback, delay) {
+      timers.push({ callback, delay });
+      return timers.length;
     },
-    addEventListener(name, callback) {
-      globalListeners[name] = callback;
-    },
-    document: {
-      querySelector(selector) {
-        assert.ok(elements.has(selector), `Unknown element: ${selector}`);
-        return elements.get(selector);
-      },
-      createElement,
-    },
+    clearTimeout() {},
   });
   vm.runInContext(storeSource, context);
-  vm.runInContext(tapStoreSource, context);
+  vm.runInContext(apiSource, context);
+  vm.runInContext(geoSource, context);
   vm.runInContext(mapSource, context);
   vm.runInContext(source, context);
+  await context.LinkedVolunteer.ready;
 
-  return {
+  const page = {
     elements,
-    storage,
-    store: context.LinkedRequestStore,
-    tapStore: context.LinkedTapRequestStore,
-    bridge,
-    items: () => elements.get("#tap-request-list").children,
-    // Wacht tot de lopende vraag aan de brug klaar is.
-    settle: () => new Promise((resolve) => setImmediate(resolve)),
+    leaflet,
+    timers,
+    bridgeCalls,
+    session: device.session,
+    get: (id) => elements.get(id),
+    items: () => elements.get("tap-request-list").children,
+    titles: () =>
+      page.items().map((item) => item.children[0].children[0].textContent),
+    states: () =>
+      page.items().map((item) => item.children[0].children[0].children[0].textContent),
+    acceptButton: (index) => page.items()[index].children[1],
+    async signIn(username, password = server.PASSWORD) {
+      elements.get("signin-username").value = username;
+      elements.get("signin-password").value = password;
+      await elements.get("signin-form").listeners.submit({ preventDefault() {} });
+      await settle();
+    },
+    // De volgende ronde van het regelmatig opvragen.
     async poll() {
-      await pollTimer();
+      const timer = timers.filter((t) => t.delay === 3000).at(-1);
+      await timer.callback();
+      await settle();
     },
-    click(selector) {
-      elements.get(selector).listeners.click();
-    },
-    dispatchStorage(key = context.LinkedRequestStore.storageKey) {
-      globalListeners.storage({
-        key,
-      });
+    async click(id) {
+      await elements.get(id).listeners.click();
+      await settle();
     },
   };
+  return page;
 }
 
-const emptyInbox = setup();
-assert.equal(emptyInbox.elements.get("#pending-request").hidden, true);
-assert.equal(emptyInbox.elements.get("#accepted-request").hidden, true);
-assert.equal(emptyInbox.elements.get("#empty-state").hidden, false);
-assert.equal(
-  emptyInbox.elements.get("#inbox-status").textContent,
-  "No pending requests right now.",
-);
-
-const sharedStorage = createStorage();
-const requesterStore = loadStore(sharedStorage);
-const request = requesterStore.createRequest();
-const inbox = setup(sharedStorage);
-assert.equal(inbox.elements.get("#pending-request").hidden, false);
-assert.equal(inbox.elements.get("#empty-state").hidden, true);
-assert.match(
-  inbox.elements.get("#request-received").textContent,
-  /^Received /,
-);
-
-inbox.click("#open-request");
-assert.equal(inbox.elements.get("#request-details").hidden, false);
-assert.equal(inbox.elements.get("#accept-request").focused, true);
-assert.equal(
-  inbox.elements.get("#open-request").attributes["aria-expanded"],
-  "true",
-);
-
-inbox.click("#accept-request");
-const acceptedRequest = requesterStore.getRequest();
-assert.equal(acceptedRequest.status, "accepted");
-assert.ok(Number.isFinite(acceptedRequest.acceptedAt));
-assert.equal(inbox.elements.get("#pending-request").hidden, true);
-assert.equal(inbox.elements.get("#accepted-request").hidden, false);
-assert.match(
-  inbox.elements.get("#inbox-status").textContent,
-  /accepted/,
-);
-
-inbox.click("#accept-request");
-assert.equal(
-  requesterStore.getRequest().acceptedAt,
-  acceptedRequest.acceptedAt,
-  "Repeated activation cannot accept an accepted request again",
-);
-assert.equal(requesterStore.acceptRequest(request.id), null);
-
-const refreshedInbox = setup(sharedStorage);
-assert.equal(refreshedInbox.elements.get("#accepted-request").hidden, false);
-assert.equal(refreshedInbox.elements.get("#empty-state").hidden, true);
-
-const cancelledStorage = createStorage();
-const cancelledStore = loadStore(cancelledStorage);
-const cancelledRequest = cancelledStore.createRequest();
-cancelledStore.cancelRequest(cancelledRequest.id);
-assert.equal(cancelledStore.acceptRequest(cancelledRequest.id), null);
-const cancelledInbox = setup(cancelledStorage);
-assert.equal(cancelledInbox.elements.get("#pending-request").hidden, true);
-assert.equal(cancelledInbox.elements.get("#accepted-request").hidden, true);
-assert.equal(cancelledInbox.elements.get("#empty-state").hidden, false);
-
-const crossTabStorage = createStorage();
-const crossTabStore = loadStore(crossTabStorage);
-const crossTabRequest = crossTabStore.createRequest();
-const waitingInbox = setup(crossTabStorage);
-crossTabStore.acceptRequest(crossTabRequest.id);
-waitingInbox.dispatchStorage();
-assert.equal(waitingInbox.elements.get("#accepted-request").hidden, false);
-assert.equal(waitingInbox.elements.get("#pending-request").hidden, true);
-
-console.log(
-  "Passed: empty inbox, pending request, open details, accept once, " +
-    "accepted refresh, cancelled request rejection, and cross-tab updates.",
-);
-
-const defaultAvailability = setup();
-assert.equal(
-  defaultAvailability.elements.get("#availability-card").dataset.state,
-  "available",
-);
-assert.equal(
-  defaultAvailability.elements.get("#availability-value").textContent,
-  "Available",
-);
-assert.equal(
-  defaultAvailability.elements.get("#availability-toggle").attributes[
-    "aria-checked"
-  ],
-  "true",
-);
-
-const availabilityStorage = createStorage();
-const availabilityStore = loadStore(availabilityStorage);
-const pendingRequest = availabilityStore.createRequest();
-const availableInbox = setup(availabilityStorage);
-assert.equal(availableInbox.elements.get("#pending-request").hidden, false);
-assert.equal(availableInbox.elements.get("#unavailable-state").hidden, true);
-assert.equal(availableInbox.store.getRequest().id, pendingRequest.id);
-
-availableInbox.click("#availability-toggle");
-assert.equal(availableInbox.store.getAvailability(), "unavailable");
-assert.equal(
-  availableInbox.elements.get("#availability-card").dataset.state,
-  "unavailable",
-);
-assert.equal(
-  availableInbox.elements.get("#availability-value").textContent,
-  "Unavailable",
-);
-assert.equal(
-  availableInbox.elements.get("#availability-toggle").attributes[
-    "aria-checked"
-  ],
-  "false",
-);
-assert.equal(availableInbox.elements.get("#pending-request").hidden, true);
-assert.equal(availableInbox.elements.get("#empty-state").hidden, true);
-assert.equal(availableInbox.elements.get("#unavailable-state").hidden, false);
-assert.equal(availableInbox.elements.get("#accept-request").disabled, true);
-assert.match(
-  availableInbox.elements.get("#inbox-status").textContent,
-  /unavailable/i,
-);
-
-const unavailableStorage = createStorage();
-const unavailableStore = loadStore(unavailableStorage);
-unavailableStore.setAvailability("unavailable");
-const unavailableInbox = setup(unavailableStorage);
-const hiddenRequest = unavailableStore.createRequest();
-unavailableInbox.dispatchStorage();
-assert.equal(unavailableInbox.elements.get("#pending-request").hidden, true);
-assert.equal(unavailableInbox.elements.get("#unavailable-state").hidden, false);
-
-const refreshedUnavailableInbox = setup(unavailableStorage);
-assert.equal(
-  refreshedUnavailableInbox.store.getAvailability(),
-  "unavailable",
-);
-assert.equal(
-  refreshedUnavailableInbox.elements.get("#pending-request").hidden,
-  true,
-);
-assert.equal(
-  refreshedUnavailableInbox.store.getRequest().id,
-  hiddenRequest.id,
-);
-
-unavailableInbox.click("#accept-request");
-assert.equal(unavailableStore.getRequest().status, "pending");
-
-unavailableInbox.click("#availability-toggle");
-assert.equal(unavailableStore.getAvailability(), "available");
-assert.equal(unavailableInbox.elements.get("#pending-request").hidden, false);
-assert.equal(unavailableInbox.elements.get("#unavailable-state").hidden, true);
-assert.equal(
-  unavailableInbox.store.getRequest().status,
-  "pending",
-);
-
-const acceptedAvailabilityStorage = createStorage();
-const acceptedAvailabilityStore = loadStore(acceptedAvailabilityStorage);
-const acceptedForUnavailable = acceptedAvailabilityStore.createRequest();
-acceptedAvailabilityStore.acceptRequest(acceptedForUnavailable.id);
-const acceptedUnavailableInbox = setup(acceptedAvailabilityStorage);
-acceptedUnavailableInbox.click("#availability-toggle");
-assert.equal(
-  acceptedUnavailableInbox.elements.get("#accepted-request").hidden,
-  false,
-);
-assert.equal(
-  acceptedUnavailableInbox.elements.get("#unavailable-state").hidden,
-  true,
-);
-assert.match(
-  acceptedUnavailableInbox.elements.get("#inbox-status").textContent,
-  /accepted/i,
-);
-
-const crossTabAvailabilityStorage = createStorage();
-const crossTabAvailabilityStore = loadStore(crossTabAvailabilityStorage);
-const crossTabAvailabilityInbox = setup(crossTabAvailabilityStorage);
-crossTabAvailabilityStore.setAvailability("unavailable");
-crossTabAvailabilityInbox.dispatchStorage(
-  crossTabAvailabilityInbox.store.availabilityKey,
-);
-assert.equal(
-  crossTabAvailabilityInbox.elements.get("#availability-card").dataset.state,
-  "unavailable",
-);
-assert.equal(
-  crossTabAvailabilityInbox.elements.get("#availability-value").textContent,
-  "Unavailable",
-);
-
-const invalidAvailabilityStorage = createStorage();
-invalidAvailabilityStorage.setItem(
-  "linked.volunteer-availability.v1",
-  "banana",
-);
-const invalidAvailabilityStore = loadStore(invalidAvailabilityStorage);
-assert.equal(invalidAvailabilityStore.getAvailability(), "available");
-assert.equal(invalidAvailabilityStore.setAvailability("banana"), null);
-
-console.log(
-  "Passed (story 8): availability default, inbox visibility, toggle, " +
-    "persistence, hidden-request retention, acceptance guard, accepted " +
-    "request visibility, cross-tab update, and invalid-value fallback.",
-);
-
-async function runTapTests() {
-  const listening = { ok: true, reader: "listening" };
-  const tap = (id, uid = "04A39B127C8091") => ({
-    ...listening,
-    taps: [{ id, uid }],
-    latest: id,
+// Aanvrager op een eigen telefoon (zelfde API als app.js gebruikt).
+async function askHelp(server, body = {}) {
+  const phone = server.device();
+  const response = await phone.fetch("/api/help-requests", {
+    method: "POST",
+    headers: { "X-Linked-Request": "1" },
+    body: JSON.stringify(body),
   });
+  return (await response.json()).request.id;
+}
 
-  // Afstanden: haversine en hypothetische plekken op 0,3–3 km.
-  const distanceStore = loadTapStore(createStorage());
-  const volunteer = distanceStore.volunteerLocation;
-  assert.equal(distanceStore.distanceMeters(volunteer, volunteer), 0);
-  const oneKmNorth = {
-    latitude: volunteer.latitude + 1000 / 111195,
-    longitude: volunteer.longitude,
-  };
-  assert.ok(
-    Math.abs(distanceStore.distanceMeters(volunteer, oneKmNorth) - 1000) < 2,
+(async () => {
+  const server = createFakeServer();
+
+  // 1. Niet ingelogd: alleen het inlogformulier, geen aanvragen.
+  const laptop = await openPage(server);
+  assert.equal(laptop.get("signin-card").hidden, false);
+  assert.equal(laptop.get("volunteer-area").hidden, true);
+  assert.equal(laptop.get("reader-status").hidden, true, "Geen lezer op de gehoste site");
+  assert.equal(laptop.bridgeCalls.length, 0, "Nooit naar 127.0.0.1 op de gehoste site");
+
+  await laptop.signIn("helper", "wrong");
+  assert.equal(laptop.get("signin-error").textContent, "Wrong username or password.");
+  assert.equal(laptop.get("volunteer-area").hidden, true);
+
+  await laptop.signIn("helper");
+  assert.equal(laptop.get("signin-card").hidden, true);
+  assert.equal(laptop.get("volunteer-area").hidden, false);
+  assert.equal(laptop.get("signed-in-as").textContent, "Signed in as helper");
+  assert.equal(
+    laptop.get("nearby-status").textContent,
+    "No requests right now. New requests appear here automatically.",
   );
-  for (let i = 0; i < 50; i += 1) {
-    const request = distanceStore.createTapRequest(`04${i}`);
-    const distance = distanceStore.distanceMeters(volunteer, request.location);
-    assert.ok(distance >= 299 && distance <= 3001, `distance ${distance}`);
+  assert.equal(laptop.get("clear-tap-requests").hidden, true, "Alleen beheerders mogen leegmaken");
+
+  // 2. Tweede vrijwilliger op een ander apparaat.
+  const tablet = await openPage(server);
+  await tablet.signIn("helper2");
+
+  // 3. Iemand vraagt hulp op een telefoon: beide apparaten zien het.
+  await askHelp(server);
+  await askHelp(server, { token: "active-token" });
+  await laptop.poll();
+  await tablet.poll();
+  for (const page of [laptop, tablet]) {
+    // Gesorteerd op afstand: req-2 (~0,33 km) staat het dichtst bij.
+    assert.deepEqual(page.titles(), ["Request 2", "Request 1"]);
+    assert.deepEqual(page.states(), ["Closest", "Waiting"]);
+    assert.equal(page.get("tap-alert").hidden, false, "Melding bij een nieuwe aanvraag");
+    assert.ok(page.get("tap-alert-text").textContent.startsWith("Wristband WB-0001 asked for help"));
+    assert.equal(page.get("nearby-status").textContent, "2 waiting. Closest: 330 m away.");
+    assert.equal(page.leaflet.markers.length, 3, "Vrijwilliger + 2 aanvragen op de kaart");
   }
-  assert.equal(distanceStore.getTapRequests().length, 20, "Keeps the last 20");
-  assert.equal(distanceStore.createTapRequest(""), null);
-  const sorted = distanceStore.getTapRequestsByDistance();
-  for (let i = 1; i < sorted.length; i += 1) {
-    assert.ok(sorted[i - 1].distanceMeters <= sorted[i].distanceMeters);
-  }
+  // Niets veranderd: dezelfde knoppen blijven staan (focus blijft behouden).
+  const before = laptop.items()[0];
+  await laptop.poll();
+  assert.equal(laptop.items()[0], before, "Lijst niet opnieuw opgebouwd zonder wijziging");
+  const details = laptop.items()[0].children[0].children[1].textContent;
+  assert.ok(details.includes("wristband WB-0001 at Glow"), details);
+  assert.ok(laptop.items()[1].children[0].children[1].textContent.includes("via the Linked app"));
 
-  // Eerste vraag negeert oude tikken; elke volgende tik is een nieuw verzoek.
-  const leaflet = createLeaflet();
-  const tapStorage = createStorage();
-  const tapInbox = setup(
-    tapStorage,
-    [{ ...listening, taps: [], latest: 4 }, tap(5), tap(6), tap(7, "04BB")],
-    leaflet,
-  );
-  await tapInbox.settle();
-  assert.equal(tapInbox.tapStore.getTapRequests().length, 0);
-  assert.match(
-    tapInbox.elements.get("#reader-status").textContent,
-    /listening/,
-  );
-  assert.ok(tapInbox.bridge.urls[0].endsWith("/api/nfc/taps"));
-  assert.equal(tapInbox.elements.get("#clear-tap-requests").hidden, true);
-  assert.equal(leaflet.markers.length, 1, "Only the volunteer at first");
+  // 4. Laptop accepteert; de tablet ziet dat bij de volgende ronde.
+  await laptop.acceptButton(0).listeners.click();
+  await settle();
+  assert.equal(laptop.states().filter((s) => s === "Accepted by you").length, 1);
+  assert.equal(laptop.items().find((i) => i.dataset.status === "accepted").children.length, 1,
+    "Geen knop meer bij een geaccepteerde aanvraag");
+  await tablet.poll();
+  assert.ok(tablet.states().includes("Accepted by helper"));
+  assert.equal(tablet.get("nearby-status").textContent, "1 waiting. Closest: 1.0 km away.");
+  assert.equal(tablet.get("tap-alert").hidden, true, "Melding weg na acceptatie elders");
 
-  await tapInbox.poll();
-  assert.ok(tapInbox.bridge.urls[1].endsWith("/api/nfc/taps?after=4"));
-  assert.equal(tapInbox.elements.get("#tap-alert").hidden, false);
-  assert.match(
-    tapInbox.elements.get("#tap-alert-text").textContent,
-    /04A39B127C8091 was tapped just now, .* away/,
-  );
-  await tapInbox.poll();
-  await tapInbox.poll();
-  const requests = tapInbox.tapStore.getTapRequestsByDistance();
-  assert.equal(requests.length, 3, "Every tap is a new request");
-  assert.equal(
-    tapInbox.store.getRequest(),
-    null,
-    "The requester page request is not touched",
-  );
+  // 5. Tablet drukt op een verouderde knop: te laat, duidelijke melding.
+  await tablet.signIn("helper2");
+  server.state.requests[0].status = "pending";
+  await tablet.poll();
+  server.state.requests[0].status = "accepted";
+  server.state.requests[0].acceptedBy = "helper";
+  const stale = tablet.items().find((item) => item.children[1]?.textContent === "Accept"
+    && item.children[0].children[0].textContent.startsWith("Request 1"));
+  await stale.children[1].listeners.click();
+  await settle();
+  assert.equal(tablet.get("page-message").textContent,
+    "Another volunteer already accepted this request.");
+  assert.equal(tablet.get("page-message").hidden, false);
+  assert.ok(!tablet.states().includes("Waiting"));
 
-  // Lijst: dichtstbijzijnde eerst, met afstand en eigen accepteerknop.
-  const items = tapInbox.items();
-  assert.equal(items.length, 3);
-  assert.equal(items[0].dataset.closest, "true");
-  assert.equal(items[1].dataset.closest, "false");
-  assert.match(items[0].children[0].children[0].children[0].textContent, /Closest/);
-  assert.match(items[0].children[0].children[1].textContent, / away · wristband /);
-  assert.match(
-    tapInbox.elements.get("#nearby-status").textContent,
-    /^3 waiting\. Closest: /,
-  );
+  // 6. Onbeschikbaar: wachtende aanvragen verborgen, geaccepteerde zichtbaar.
+  await askHelp(server);
+  await tablet.poll();
+  await tablet.click("availability-toggle");
+  assert.equal(tablet.get("availability-value").textContent, "Unavailable");
+  assert.ok(tablet.states().every((state) => state.startsWith("Accepted")));
+  assert.equal(tablet.get("tap-alert").hidden, true);
+  await tablet.click("availability-toggle");
+  assert.ok(tablet.states().includes("Closest"));
 
-  // Kaart: vrijwilliger plus drie verzoeken; dichtstbijzijnde groter.
-  assert.equal(leaflet.markers.length, 4);
-  assert.equal(leaflet.markers[1].options.radius, 11);
-  assert.equal(leaflet.markers[2].options.radius, 8);
-  assert.equal(leaflet.bounds.length, 4);
-  assert.equal(tapInbox.elements.get("#requests-map").dataset.mapState, "ready");
+  // 7. Aanvrager annuleert: verdwijnt overal.
+  const phone = server.device();
+  await phone.fetch("/api/help-requests/req-3/cancel", {
+    method: "POST",
+    headers: { "X-Linked-Request": "1", "X-Linked-Secret": "secret-req-3" },
+  });
+  await laptop.poll();
+  assert.equal(laptop.items().length, 2);
 
-  // Het dichtstbijzijnde accepteren maakt het volgende het dichtstbij.
-  const closestId = requests[0].id;
-  items[0].children[1].listeners.click();
-  assert.equal(
-    tapInbox.tapStore.getTapRequests().find((r) => r.id === closestId).status,
-    "accepted",
-  );
-  const afterAccept = tapInbox.items();
-  assert.equal(afterAccept[0].dataset.closest, "true");
-  assert.notEqual(afterAccept[0].children[0].children[0].textContent, "");
-  const acceptedItem = afterAccept.find(
-    (item) => item.children.length === 1,
-  );
-  assert.match(
-    acceptedItem.children[0].children[0].children[0].textContent,
-    /Accepted/,
-  );
-  assert.match(
-    tapInbox.elements.get("#nearby-status").textContent,
-    /^2 waiting/,
-  );
+  // 8. Verbinding weg: laatste lijst blijft staan met een melding.
+  server.state.online = false;
+  await laptop.poll();
+  assert.equal(laptop.items().length, 2);
+  assert.equal(laptop.get("nearby-status").textContent,
+    "All requests have been accepted. Connection lost, trying again…");
+  server.state.online = true;
 
-  // Melding sluiten zet de focus op de status bij de kaart.
-  tapInbox.click("#dismiss-tap-alert");
-  assert.equal(tapInbox.elements.get("#tap-alert").hidden, true);
-  assert.equal(tapInbox.elements.get("#nearby-status").focused, true);
+  // 9. Uitloggen: terug naar het inlogformulier.
+  const expired = await openPage(server);
+  await expired.signIn("helper");
+  await expired.click("sign-out");
+  assert.equal(expired.get("signin-card").hidden, false);
+  assert.equal(expired.get("volunteer-area").hidden, true);
+  assert.equal(expired.get("sign-out").hidden, true);
 
-  // Na vernieuwen staan de verzoeken er nog.
-  const refreshed = setup(tapStorage);
-  assert.equal(refreshed.items().length, 3);
+  // 10. Beheerder: mag alles leegmaken.
+  const admin = await openPage(server);
+  await admin.signIn("admin");
+  assert.equal(admin.get("clear-tap-requests").hidden, false);
+  await admin.click("clear-tap-requests");
+  assert.equal(admin.items().length, 0);
+  assert.equal(server.state.requests.length, 0);
 
-  // Onbeschikbaar: wachtende verzoeken verborgen, geaccepteerde zichtbaar,
-  // accepteren geblokkeerd en geen melding bij een nieuwe tik.
-  refreshed.click("#availability-toggle");
-  assert.equal(refreshed.items().length, 1);
-  assert.match(
-    refreshed.elements.get("#nearby-status").textContent,
-    /unavailable/,
-  );
-  const pausedStorage = createStorage();
-  loadStore(pausedStorage).setAvailability("unavailable");
-  const pausedInbox = setup(pausedStorage, [
-    { ...listening, taps: [], latest: 0 },
-    tap(1, "04CC"),
-  ]);
-  await pausedInbox.settle();
-  await pausedInbox.poll();
-  assert.equal(pausedInbox.tapStore.getTapRequests().length, 1);
-  assert.equal(pausedInbox.elements.get("#tap-alert").hidden, true);
-  assert.equal(pausedInbox.items().length, 0);
+  // 11. Op de computer met de lezer (localhost): een tik wordt een gedeelde aanvraag.
+  const desk = await openPage(server, {
+    hostname: "localhost",
+    bridge: [
+      { reader: "listening", taps: [], latest: 4 },
+      { reader: "listening", taps: [{ id: 5, uid: "04A39B127C8091" }], latest: 5 },
+    ],
+  });
+  assert.equal(desk.get("reader-status").hidden, false);
+  await desk.signIn("helper");
+  assert.equal(desk.get("reader-status").textContent, "Wristband reader: listening for taps.");
+  const tapTimer = desk.timers.filter((t) => t.delay === 1500).at(-1);
+  await tapTimer.callback();
+  await settle();
+  assert.equal(server.state.requests.length, 1);
+  assert.equal(server.state.requests[0].tagUid, "04A39B127C8091");
+  assert.ok(desk.items()[0].children[0].children[1].textContent.includes("(reader)"));
+  await laptop.poll();
+  assert.equal(laptop.items().length, 1, "Tik op de lezer is op elk apparaat zichtbaar");
 
-  // Wissen maakt de lijst leeg.
-  refreshed.click("#availability-toggle");
-  refreshed.click("#clear-tap-requests");
-  assert.equal(refreshed.tapStore.getTapRequests().length, 0);
-  assert.equal(refreshed.items().length, 0);
-  assert.match(
-    refreshed.elements.get("#nearby-status").textContent,
-    /No wristband requests yet/,
-  );
-
-  // Zonder Leaflet (offline) blijft de lijst werken.
-  const noMapInbox = setup(tapStorage);
-  assert.equal(
-    noMapInbox.elements.get("#requests-map").dataset.mapState,
-    "unavailable",
-  );
-
-  // Ongeldige opgeslagen gegevens vallen terug op een lege lijst.
-  const brokenStorage = createStorage();
-  brokenStorage.setItem("linked.tap-requests.v1", "{not json");
-  assert.equal(loadTapStore(brokenStorage).getTapRequests().length, 0);
-
-  // Brug offline en Arduino los geven een duidelijke status.
-  const offlineInbox = setup();
-  await offlineInbox.settle();
-  assert.match(
-    offlineInbox.elements.get("#reader-status").textContent,
-    /bridge offline/,
-  );
-  const disconnectedInbox = setup(createStorage(), [
-    { ok: true, reader: "disconnected", taps: [], latest: 0 },
-  ]);
-  await disconnectedInbox.settle();
-  assert.match(
-    disconnectedInbox.elements.get("#reader-status").textContent,
-    /Serial Monitor/,
-  );
+  // 12. Rol ingetrokken of sessie verlopen: terug naar inloggen.
+  const revoked = await openPage(server);
+  await revoked.signIn("helper");
+  revoked.session.user = { username: "helper", role: "guest" };
+  await revoked.poll();
+  assert.equal(revoked.get("volunteer-area").hidden, true);
+  assert.equal(revoked.get("signin-card").hidden, false);
+  assert.equal(revoked.get("page-message").textContent,
+    "This account cannot see help requests. Sign in as a volunteer.");
+  const lapsed = await openPage(server);
+  await lapsed.signIn("helper");
+  lapsed.session.user = null;
+  await lapsed.poll();
+  assert.equal(lapsed.get("signin-card").hidden, false);
 
   console.log(
-    "Passed (story 7 map): distances, simulated positions, every tap a " +
-      "request, closest first, map markers, accept per request, dismiss, " +
-      "refresh, unavailable, clear, offline map, reader status.",
+    "Passed: sign-in gate, two volunteers on different devices see the same " +
+      "requests, alert for new requests, accept shows on every device, stale accept " +
+      "refused, availability, cancel by requester, offline, sign out, admin clear, " +
+      "reader taps only on localhost and shared with every device, role revoked.",
   );
-}
-
-runTapTests().catch((error) => {
+})().catch((error) => {
   console.error(error);
-  process.exitCode = 1;
+  process.exit(1);
 });

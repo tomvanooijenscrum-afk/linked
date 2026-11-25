@@ -8,3 +8,4 @@ server/test_server.py
 .vscode/
 .prettierrc.json
 public/
+test-*.cjs

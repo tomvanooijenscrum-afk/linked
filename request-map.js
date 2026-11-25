@@ -23,7 +23,15 @@
     element.replaceChildren();
     const map = leaflet.map(element, { scrollWheelZoom: false });
     map.setView([volunteer.latitude, volunteer.longitude], 13);
-    leaflet.tileLayer(tiles, { attribution, maxZoom: 19 }).addTo(map);
+    // OpenStreetMap weigert tegels zonder Referer; de server stuurt overal
+    // no-referrer mee. Alleen de herkomst (geen pad of token) is genoeg.
+    leaflet
+      .tileLayer(tiles, {
+        attribution,
+        maxZoom: 19,
+        referrerPolicy: "strict-origin-when-cross-origin",
+      })
+      .addTo(map);
     leaflet
       .circleMarker([volunteer.latitude, volunteer.longitude], {
         radius: 10,

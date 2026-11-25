@@ -1,5 +1,9 @@
+// Lokaal geheugen van dit apparaat. De aanvraag zelf staat op de server
+// (zie server/help_requests.py); hier staat alleen welke aanvraag van deze
+// aanvrager is, met het geheim om de status te volgen of te annuleren.
+// Daarnaast de beschikbaarheid van de vrijwilliger op dit apparaat.
 ((global) => {
-  const storageKey = "linked.help-request.v1";
+  const storageKey = "linked.help-request.v2";
   const availabilityKey = "linked.volunteer-availability.v1";
   const validStatuses = new Set(["pending", "accepted", "cancelled"]);
   const validAvailability = new Set(["available", "unavailable"]);
@@ -30,21 +34,26 @@
       request !== null &&
       typeof request === "object" &&
       typeof request.id === "string" &&
-      validStatuses.has(request.status) &&
-      Number.isFinite(request.createdAt) &&
-      (request.acceptedAt === null || Number.isFinite(request.acceptedAt))
+      typeof request.secret === "string" &&
+      validStatuses.has(request.status)
     );
   }
 
   function getRequest() {
-    const storedRequest = global.localStorage.getItem(storageKey);
-    if (storedRequest === null) {
+    let stored;
+    try {
+      stored = global.localStorage.getItem(storageKey);
+    } catch (error) {
+      console.error("Could not read the saved help request.", error);
+      return null;
+    }
+    if (stored === null) {
       return null;
     }
 
     let request;
     try {
-      request = JSON.parse(storedRequest);
+      request = JSON.parse(stored);
     } catch (error) {
       console.error("Could not read the saved help request.", error);
       return null;
@@ -58,58 +67,32 @@
     return request;
   }
 
-  function saveRequest(request) {
+  // serverRequest: { id, status, createdAt, acceptedAt } van de API.
+  function saveRequest(serverRequest, secret) {
+    const request = {
+      id: serverRequest.id,
+      secret,
+      status: serverRequest.status,
+      createdAt: serverRequest.createdAt ?? null,
+      acceptedAt: serverRequest.acceptedAt ?? null,
+    };
+    if (!isValidRequest(request)) {
+      return null;
+    }
     global.localStorage.setItem(storageKey, JSON.stringify(request));
     return request;
   }
 
-  function createRequest() {
-    const request = {
-      id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
-      status: "pending",
-      createdAt: Date.now(),
-      acceptedAt: null,
-    };
-    return saveRequest(request);
-  }
-
-  function acceptRequest(requestId) {
-    const request = getRequest();
-    if (
-      !request ||
-      request.id !== requestId ||
-      request.status !== "pending"
-    ) {
-      return null;
-    }
-
-    return saveRequest({
-      ...request,
-      status: "accepted",
-      acceptedAt: Date.now(),
-    });
-  }
-
-  function cancelRequest(requestId) {
-    const request = getRequest();
-    if (
-      !request ||
-      request.id !== requestId ||
-      (request.status !== "pending" && request.status !== "accepted")
-    ) {
-      return null;
-    }
-
-    return saveRequest({ ...request, status: "cancelled" });
+  function clearRequest() {
+    global.localStorage.removeItem(storageKey);
   }
 
   global.LinkedRequestStore = Object.freeze({
     storageKey,
     availabilityKey,
     getRequest,
-    createRequest,
-    acceptRequest,
-    cancelRequest,
+    saveRequest,
+    clearRequest,
     getAvailability,
     setAvailability,
   });

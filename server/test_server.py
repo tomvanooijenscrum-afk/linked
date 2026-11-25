@@ -342,6 +342,130 @@ class ServerTest(unittest.TestCase):
             body = public.get(f"/api/wristbands/resolve?t={token}").json
             self.assertEqual(body["status"], "unknown", token)
 
+    # -- hulpaanvragen ---------------------------------------------------
+
+    def ask_help(self, client=None, **body):
+        client = client or self.app.test_client()
+        response = client.post("/api/help-requests", json=body, headers=HEADERS)
+        self.assertEqual(response.status_code, 201, response.json)
+        return response.json["request"]["id"], response.json["secret"]
+
+    def requester_get(self, request_id, secret, client=None):
+        client = client or self.app.test_client()
+        return client.get(f"/api/help-requests/{request_id}",
+                          headers={"X-Linked-Secret": secret})
+
+    def test_help_request_seen_and_accepted_across_devices(self):
+        phone = self.app.test_client()
+        request_id, secret = self.ask_help(phone)
+        self.assertEqual(self.requester_get(request_id, secret, phone).json["request"]["status"],
+                         "pending")
+
+        # Twee vrijwilligers op eigen apparaten zien dezelfde aanvraag.
+        laptop = self.login("helper", self.app.test_client())
+        tablet = self.login("admin2", self.app.test_client())
+        for device in (laptop, tablet):
+            listed = device.get("/api/help-requests").json["requests"]
+            self.assertEqual([r["id"] for r in listed], [request_id])
+            self.assertEqual(listed[0]["status"], "pending")
+            self.assertEqual(listed[0]["source"], "app")
+            self.assertNotIn("secret", listed[0])
+            self.assertNotIn("secret_hash", listed[0])
+
+        accepted = self.post(f"/api/help-requests/{request_id}/accept", client=laptop)
+        self.assertEqual(accepted.status_code, 200, accepted.json)
+        self.assertTrue(accepted.json["request"]["acceptedByMe"])
+
+        # De tweede vrijwilliger is te laat; de eerste mag nogmaals (idempotent).
+        late = self.post(f"/api/help-requests/{request_id}/accept", client=tablet)
+        self.assertEqual((late.status_code, late.json["error"]), (409, "ALREADY_ACCEPTED"))
+        self.assertEqual(late.json["request"]["acceptedBy"], "helper")
+        again = self.post(f"/api/help-requests/{request_id}/accept", client=laptop)
+        self.assertEqual(again.status_code, 200)
+
+        seen = tablet.get("/api/help-requests").json["requests"][0]
+        self.assertEqual((seen["status"], seen["acceptedBy"], seen["acceptedByMe"]),
+                         ("accepted", "helper", False))
+        status = self.requester_get(request_id, secret, phone).json["request"]
+        self.assertEqual(status["status"], "accepted")
+        self.assertIsNotNone(status["acceptedAt"])
+
+    def test_help_request_secret_protects_status_and_cancel(self):
+        request_id, secret = self.ask_help()
+        for wrong in (None, "", "x" * 32, secret + "x"):
+            headers = {} if wrong is None else {"X-Linked-Secret": wrong}
+            response = self.client.get(f"/api/help-requests/{request_id}", headers=headers)
+            self.assertEqual(response.status_code, 404, wrong)
+            response = self.client.post(f"/api/help-requests/{request_id}/cancel",
+                                        headers={**HEADERS, **headers})
+            self.assertEqual(response.status_code, 404, wrong)
+        self.assertEqual(self.requester_get("missing", secret).status_code, 404)
+
+        cancel = self.client.post(f"/api/help-requests/{request_id}/cancel",
+                                  headers={**HEADERS, "X-Linked-Secret": secret})
+        self.assertEqual(cancel.json["request"]["status"], "cancelled")
+        self.login("helper")
+        self.assertEqual(self.client.get("/api/help-requests").json["requests"], [])
+        refused = self.post(f"/api/help-requests/{request_id}/accept")
+        self.assertEqual((refused.status_code, refused.json["error"]), (409, "REQUEST_CANCELLED"))
+
+    def test_help_requests_need_volunteer_or_admin(self):
+        request_id, _ = self.ask_help()
+        self.assertEqual(self.client.get("/api/help-requests").status_code, 401)
+        self.assertEqual(self.post(f"/api/help-requests/{request_id}/accept").status_code, 401)
+        self.assertEqual(self.post("/api/help-requests", {"tagUid": UID}).status_code, 401)
+        self.assertEqual(self.client.delete("/api/help-requests", headers=HEADERS).status_code, 401)
+        self.login("helper")
+        self.assertEqual(self.client.get("/api/help-requests").status_code, 200)
+        # Alleen een beheerder mag de lijst leegmaken.
+        self.assertEqual(self.client.delete("/api/help-requests", headers=HEADERS).status_code, 403)
+
+    def test_help_request_from_wristband_link_and_reader(self):
+        self.login()
+        event = self.post("/api/events", {"name": "Glow"}).json["event"]
+        wristband_id, url = self.register(event_id=event["id"])
+
+        # Inactief bandje: gewone aanvraag zonder bandjesgegevens.
+        self.ask_help(token=self.token(url))
+        self.post(f"/api/wristbands/{wristband_id}/activate")
+        self.ask_help(token=self.token(url))
+        tapped = self.post("/api/help-requests", {"tagUid": UID.lower()})
+        self.assertEqual(tapped.status_code, 201, tapped.json)
+        self.post("/api/help-requests", {"tagUid": OTHER_UID})
+
+        listed = self.client.get("/api/help-requests").json["requests"]
+        summary = [(r["source"], r["wristbandLabel"], r["eventName"], r["tagUid"]) for r in listed]
+        self.assertEqual(summary, [
+            ("app", None, None, None),
+            ("wristband", "WB-0001", "Glow", None),
+            ("reader", "WB-0001", "Glow", UID),
+            ("reader", None, None, OTHER_UID),
+        ])
+        for r in listed:
+            distance = ((r["location"]["latitude"] - 51.4516) * 111320,
+                        (r["location"]["longitude"] - 5.4816) * 111320 * 0.6234)
+            meters = (distance[0] ** 2 + distance[1] ** 2) ** 0.5
+            self.assertTrue(280 <= meters <= 3020, meters)
+
+        bad = self.app.test_client().post("/api/help-requests", json={"token": "nope"},
+                                          headers=HEADERS)
+        self.assertEqual(bad.status_code, 400)
+        bad = self.post("/api/help-requests", {"tagUid": "zz"})
+        self.assertEqual(bad.status_code, 400)
+
+        cleared = self.client.delete("/api/help-requests", headers=HEADERS)
+        self.assertEqual(cleared.json["removed"], 4)
+        self.assertEqual(self.client.get("/api/help-requests").json["requests"], [])
+
+    def test_help_request_creation_is_rate_limited(self):
+        client = self.app.test_client()
+        for _ in range(10):
+            self.ask_help(client)
+        response = client.post("/api/help-requests", json={}, headers=HEADERS)
+        self.assertEqual((response.status_code, response.json["error"]),
+                         (429, "TOO_MANY_ATTEMPTS"))
+        self.assertEqual(client.post("/api/help-requests", json={}).status_code, 403)
+
     # -- database en statische bestanden ---------------------------------
 
     def test_database_constraints(self):

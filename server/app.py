@@ -16,7 +16,7 @@ from pathlib import Path
 from flask import Flask, abort, current_app, g, jsonify, request, send_from_directory, session
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import wristbands
+from . import help_requests, wristbands
 from .db import IntegrityError, close_db, get_db, is_postgres, migrate
 from .passwords import verify_password
 
@@ -28,6 +28,10 @@ STATIC_FILE = re.compile(r"^(i18n/)?[A-Za-z0-9_-]+\.(html|css|js|svg|png|ico|web
 
 LOGIN_WINDOW = 15 * 60
 LOGIN_MAX_FAILURES = 5
+# Openbaar aanmaken van hulpaanvragen: per IP-adres.
+HELP_WINDOW = 10 * 60
+HELP_MAX_PER_WINDOW = 10
+VOLUNTEER_ROLES = ("volunteer", "admin")
 
 
 def database_url():
@@ -83,6 +87,7 @@ def create_app(config=None):
 
     app.teardown_appcontext(close_db)
     app.extensions["login_failures"] = {}
+    app.extensions["help_creations"] = {}
     register_routes(app)
     return app
 
@@ -111,14 +116,14 @@ def current_user():
     return g.user
 
 
-def require_role(role):
+def require_role(*roles):
     def decorator(view):
         @wraps(view)
         def wrapped(*args, **kwargs):
             user = current_user()
             if user is None:
                 return api_error("NOT_SIGNED_IN", 401)
-            if user["role"] != role:
+            if user["role"] not in roles:
                 return api_error("FORBIDDEN", 403)
             return view(*args, **kwargs)
 
@@ -315,6 +320,62 @@ def register_routes(app):
     def resolve_wristband():
         result = wristbands.resolve(get_db(), request.args.get("t"))
         return jsonify({"ok": True, **result})
+
+    # ---- Hulpaanvragen --------------------------------------------------
+
+    def requester_secret():
+        # In een header, niet in de URL: zo komt het niet in logbestanden.
+        return request.headers.get("X-Linked-Secret")
+
+    @app.post("/api/help-requests")
+    def create_help_request():
+        body = json_body()
+        tag_uid = body.get("tagUid")
+        if tag_uid is not None:
+            # Een tik op een lezer meldt alleen een ingelogde vrijwilliger.
+            user = current_user()
+            if user is None:
+                return api_error("NOT_SIGNED_IN", 401)
+            if user["role"] not in VOLUNTEER_ROLES:
+                return api_error("FORBIDDEN", 403)
+        else:
+            creations = app.extensions["help_creations"]
+            key = request.remote_addr or "unknown"
+            cutoff = time.monotonic() - HELP_WINDOW
+            creations[key] = [t for t in creations.get(key, []) if t > cutoff]
+            if len(creations[key]) >= HELP_MAX_PER_WINDOW:
+                return api_error("TOO_MANY_ATTEMPTS", 429)
+            creations[key].append(time.monotonic())
+        result = help_requests.create(get_db(), token=body.get("token"), tag_uid=tag_uid)
+        return jsonify({"ok": True, **result}), 201
+
+    @app.get("/api/help-requests")
+    @require_role(*VOLUNTEER_ROLES)
+    def list_help_requests():
+        rows = help_requests.list_open(get_db(), current_user()["id"])
+        return jsonify({"ok": True, "requests": rows})
+
+    @app.delete("/api/help-requests")
+    @require_role("admin")
+    def clear_help_requests():
+        removed = help_requests.clear(get_db())
+        return jsonify({"ok": True, "removed": removed})
+
+    @app.get("/api/help-requests/<request_id>")
+    def help_request_status(request_id):
+        row = help_requests.status(get_db(), request_id, requester_secret())
+        return jsonify({"ok": True, "request": row})
+
+    @app.post("/api/help-requests/<request_id>/cancel")
+    def cancel_help_request(request_id):
+        row = help_requests.cancel(get_db(), request_id, requester_secret())
+        return jsonify({"ok": True, "request": row})
+
+    @app.post("/api/help-requests/<request_id>/accept")
+    @require_role(*VOLUNTEER_ROLES)
+    def accept_help_request(request_id):
+        row = help_requests.accept(get_db(), request_id, current_user()["id"])
+        return jsonify({"ok": True, "request": row})
 
     # ---- De webapp zelf -------------------------------------------------
 

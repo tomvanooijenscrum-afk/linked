@@ -10,12 +10,14 @@
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     />
     <link rel="stylesheet" href="volunteer.css" />
+    <link rel="stylesheet" href="wristbands.css" />
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       defer
     ></script>
     <script src="request-store.js" defer></script>
-    <script src="tap-request-store.js" defer></script>
+    <script src="wristband-api.js" defer></script>
+    <script src="geo.js" defer></script>
     <script src="request-map.js" defer></script>
     <script src="volunteer.js" defer></script>
   </head>
@@ -28,6 +30,10 @@
       <nav class="header-links" aria-label="Pages">
         <a class="back-link" href="wristbands.html">Wristbands</a>
         <a class="back-link" href="index.html">Requester view</a>
+        <span id="signed-in-as" class="signed-in" hidden></span>
+        <button id="sign-out" class="back-link link-button" type="button" hidden>
+          Sign out
+        </button>
       </nav>
     </header>
 
@@ -37,6 +43,34 @@
         <h1 id="page-title">A little help, <em>closer.</em></h1>
         <p>Review a request and accept it when you’re ready to help.</p>
       </section>
+
+      <p id="page-message" class="page-message" role="alert" hidden></p>
+
+      <!-- Inloggen: alleen vrijwilligers en beheerders zien aanvragen. -->
+      <section id="signin-card" class="inbox-card" aria-labelledby="signin-title" hidden>
+        <div class="card-top">
+          <span class="eyebrow">VOLUNTEERS ONLY</span>
+        </div>
+        <h2 id="signin-title">Sign in</h2>
+        <form id="signin-form" class="stacked-form">
+          <label for="signin-username">Username</label>
+          <input id="signin-username" name="username" autocomplete="username" required />
+          <label for="signin-password">Password</label>
+          <input
+            id="signin-password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+          <p id="signin-error" class="field-error" role="alert" hidden></p>
+          <button id="signin-submit" class="primary" type="submit">
+            Sign in <span aria-hidden="true">↗</span>
+          </button>
+        </form>
+      </section>
+
+      <div id="volunteer-area" hidden>
 
       <section
         id="availability-card"
@@ -102,8 +136,8 @@
         aria-labelledby="nearby-title"
       >
         <div class="card-top">
-          <span class="eyebrow">WRISTBAND REQUESTS</span>
-          <span class="inbox-badge">SIMULATED</span>
+          <span class="eyebrow">HELP REQUESTS</span>
+          <span class="inbox-badge">LIVE</span>
         </div>
         <h2 id="nearby-title">Requests near you</h2>
         <p
@@ -113,13 +147,13 @@
           role="status"
           aria-live="polite"
         >
-          No wristband requests yet.
+          Loading requests…
         </p>
         <div
           id="requests-map"
           class="requests-map"
           role="img"
-          aria-label="Map of your demo position and nearby wristband requests. The list below shows the same requests."
+          aria-label="Map of your demo position and nearby help requests. The list below shows the same requests."
         ></div>
         <ul class="map-legend" aria-hidden="true">
           <li><span class="legend-dot legend-you"></span>You</li>
@@ -130,11 +164,12 @@
         <ol
           id="tap-request-list"
           class="tap-request-list"
-          aria-label="Wristband requests, closest first"
+          aria-label="Help requests, closest first"
         ></ol>
         <p
           id="reader-status"
           class="reader-status"
+          hidden
         >
           Wristband reader: checking…
         </p>
@@ -143,87 +178,16 @@
           class="secondary"
           type="button"
         >
-          Clear wristband requests
+          Clear all requests
         </button>
         <p class="demo-note">
-          Demo only. All positions are hypothetical points near Fontys
-          Rachelsmolen, chosen at random for each tap. No real location is
-          used.
+          Every signed-in volunteer sees the same requests, on any device.
+          Positions are hypothetical points near Fontys Rachelsmolen, chosen at
+          random for each request. No real location is used.
         </p>
       </section>
+      </div>
 
-      <section class="inbox-card" aria-labelledby="inbox-title">
-        <div class="card-top">
-          <span class="eyebrow">HELP REQUESTS</span>
-          <span class="inbox-badge">DEMO</span>
-        </div>
-        <h2 id="inbox-title">Requests for help</h2>
-        <p id="inbox-status" class="inbox-status" role="status" aria-live="polite">
-          No pending requests right now.
-        </p>
-
-        <article id="pending-request" class="request-card" hidden>
-          <div class="request-card-top">
-            <span class="request-indicator" aria-hidden="true"></span>
-            <span class="request-state">Pending request</span>
-          </div>
-          <h3>Help requested</h3>
-          <p id="request-received" class="request-received"></p>
-          <button
-            id="open-request"
-            class="secondary"
-            type="button"
-            aria-expanded="false"
-            aria-controls="request-details"
-          >
-            Open request
-          </button>
-          <div id="request-details" class="request-details" hidden>
-            <h4>Request details</h4>
-            <p>
-              The requester has asked for help. No additional details or real
-              location are included in this demo.
-            </p>
-            <button id="accept-request" class="primary" type="button">
-              Accept request
-              <span aria-hidden="true">↗</span>
-            </button>
-          </div>
-        </article>
-
-        <article id="accepted-request" class="request-card accepted-card" hidden>
-          <div class="request-card-top">
-            <span class="accepted-indicator" aria-hidden="true">✓</span>
-            <span class="request-state">Accepted</span>
-          </div>
-          <h3>You accepted this request</h3>
-          <p>
-            The requester has been notified that a volunteer is on the way.
-          </p>
-        </article>
-
-        <div
-          id="unavailable-state"
-          class="empty-state unavailable-state"
-          hidden
-        >
-          <span class="empty-mark" aria-hidden="true">⏸</span>
-          <p>
-            You are unavailable, so new requests are not shown. Switch to
-            Available to see them.
-          </p>
-        </div>
-
-        <div id="empty-state" class="empty-state">
-          <span class="empty-mark" aria-hidden="true">↗</span>
-          <p>When a request comes in, it will appear here.</p>
-        </div>
-
-        <p class="demo-note">
-          Demo only. This inbox does not send a real request or share a real
-          location.
-        </p>
-      </section>
     </main>
   </body>
 </html>

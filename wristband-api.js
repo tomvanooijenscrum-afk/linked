@@ -2,7 +2,7 @@
 // Elke aanroep geeft { ok, httpStatus, error?, ... } terug en gooit nooit.
 // (httpStatus, niet status: /resolve heeft zelf een veld status.)
 ((global) => {
-  async function call(path, { method = "GET", body, fetch = global.fetch } = {}) {
+  async function call(path, { method = "GET", body, headers = {}, fetch = global.fetch } = {}) {
     let response;
     try {
       response = await fetch(path, {
@@ -12,6 +12,7 @@
           "Content-Type": "application/json",
           // Verplicht voor wijzigingen; zie protect_against_csrf in app.py.
           "X-Linked-Request": "1",
+          ...headers,
         },
         body: body === undefined ? undefined : JSON.stringify(body),
       });
@@ -36,6 +37,8 @@
     const request = (path, init = {}) => call(path, { ...options, ...init });
     const post = (path, body = {}) => request(path, { method: "POST", body });
     const id = (wristbandId) => encodeURIComponent(wristbandId);
+    // Het geheim van de aanvrager gaat in een header, nooit in de URL.
+    const secretHeader = (secret) => ({ "X-Linked-Secret": secret });
 
     return Object.freeze({
       me: () => request("/api/auth/me"),
@@ -60,6 +63,24 @@
         request(`/api/wristbands/${id(wristbandId)}`, { method: "DELETE" }),
       resolve: (token) =>
         request(`/api/wristbands/resolve?t=${encodeURIComponent(token)}`),
+
+      // Hulpaanvragen, gedeeld tussen alle apparaten.
+      createHelpRequest: ({ token = null, tagUid = null } = {}) =>
+        post("/api/help-requests", {
+          ...(token ? { token } : {}),
+          ...(tagUid ? { tagUid } : {}),
+        }),
+      helpRequestStatus: (requestId, secret) =>
+        request(`/api/help-requests/${id(requestId)}`, { headers: secretHeader(secret) }),
+      cancelHelpRequest: (requestId, secret) =>
+        request(`/api/help-requests/${id(requestId)}/cancel`, {
+          method: "POST",
+          body: {},
+          headers: secretHeader(secret),
+        }),
+      listHelpRequests: () => request("/api/help-requests"),
+      acceptHelpRequest: (requestId) => post(`/api/help-requests/${id(requestId)}/accept`),
+      clearHelpRequests: () => request("/api/help-requests", { method: "DELETE" }),
     });
   }
 

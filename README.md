@@ -9,29 +9,54 @@ Nederlandstalig; de onderstaande knop- en statusnamen volgen de Engelse UI.
 
 ## Starten
 
-Open `index.html` in een browser. Er is geen installatie, build of server
-nodig. De app werkt lokaal, ook zonder internet. Voor testen op een telefoon
-kun je de bestanden lokaal openen of via jullie eigen lokale webserver
-beschikbaar maken.
+Live: <https://linked-mu-jet.vercel.app> (hulppagina) en
+`/volunteer.html` (vrijwilligers, inloggen verplicht). Lokaal draait alles
+via de Flask-server, zie **Server starten** hieronder.
 
-## De flow testen
+## Hulpaanvragen op meerdere apparaten
 
-1. Open de pagina: **Ask for help** is direct beschikbaar.
-2. Klik: **Request sent (demo)** verschijnt en annuleren wordt beschikbaar.
-3. Wacht ongeveer 1,5 seconde: **Receipt simulated (demo)** verschijnt.
-4. Klik op **Cancel request**: de annulering wordt bevestigd.
-5. Klik op **Ask for help again**: een nieuw verzoek begint.
-6. Herhaal, maar annuleer vóór de ontvangstsimulatie. Wacht daarna:
-   de status blijft geannuleerd.
-7. Klik snel meerdere keren: er ontstaat maximaal één actief verzoek.
-8. Test met Tab en Enter en op een smal scherm (bijvoorbeeld 320–390 px).
+Een hulpaanvraag staat op de server (`server/help_requests.py`), niet meer
+alleen in de browser. Daardoor:
 
-Verzending en ontvangst worden alleen in dezelfde pagina gesimuleerd.
-Er is geen backend, echte ontvanger of hulp onderweg. Annulering stopt
-het lokale verzoek en de wachtende ontvangstsimulatie. Deze demo verwerkt
-geen locatie of persoonsgegevens. Het demoverzoek en de beschikbaarheid
-worden lokaal in de browser opgeslagen. Vernieuwen behoudt deze gegevens;
-andere tabbladen kunnen wijzigingen volgen.
+- **Aanvrager** (`index.html`, ook geopend via een polsbandje): **Ask for
+  help** maakt de aanvraag op de server. De telefoon bewaart alleen het id en
+  een geheim (`linked.help-request.v2`) en vraagt elke 3 seconden de status
+  op. Is de pagina met een actief bandje geopend, dan gaat het token mee en
+  zien vrijwilligers om welk bandje (en evenement) het gaat.
+- **Vrijwilligers** (`volunteer.html`) loggen in met een account met de rol
+  `volunteer` of `admin`. Elk apparaat vraagt elke 3 seconden de lijst op
+  (niet als het tabblad op de achtergrond staat). Een nieuwe aanvraag geeft
+  een melding; de dichtstbijzijnde staat bovenaan.
+- **Accepteren:** wie het eerst komt. Een tweede vrijwilliger krijgt
+  "Another volunteer already accepted this request." De aanvrager ziet
+  **A volunteer is on the way** op de eigen telefoon.
+- **Annuleren** door de aanvrager haalt de aanvraag bij alle vrijwilligers weg.
+- Beheerders kunnen alle aanvragen leegmaken (**Clear all requests**), handig
+  na een demo.
+
+Het geheim van de aanvrager gaat in de header `X-Linked-Secret`, nooit in de
+URL. In de database staat alleen de SHA-256-hash. Aanmaken zonder account is
+beperkt tot 10 aanvragen per 10 minuten per IP-adres (per serverinstantie)
+en maximaal 100 wachtende aanvragen. **Alle locaties zijn hypothetisch:** de
+server kiest een willekeurig punt op 0,3–3 km van Fontys Rachelsmolen.
+
+Een vrijwilligersaccount maken (zie **Hosting op Vercel** voor de database):
+
+```sh
+server/.venv/bin/python -m server.manage create-user <naam> --role volunteer
+```
+
+### De flow testen op twee apparaten
+
+1. Log op apparaat A en B in op `/volunteer.html`.
+2. Open de hulppagina op een telefoon en klik **Ask for help**: **Request
+   sent** verschijnt, en binnen enkele seconden staat de aanvraag op A en B.
+3. Klik op A **Accept**: A toont **Accepted by you**, B **Accepted by …**,
+   de telefoon **A volunteer is on the way**.
+4. Vraag opnieuw hulp en annuleer op de telefoon: de aanvraag verdwijnt op
+   A en B.
+5. Zet de telefoon offline en vraag hulp: **Your request could not be sent**
+   met **Try again**.
 
 ## Kaart en geluid (branch `feature/map-and-sound`)
 
@@ -211,9 +236,10 @@ toont of en als welk bandje (`WB-0001`) hij geregistreerd is.
 De link op het bandje is `<LINKED_PUBLIC_BASE_URL>/?t=<token>`. De
 hulppagina haalt het token meteen uit de adresbalk, vraagt
 `/api/wristbands/resolve` en toont **Wristband recognised**, **no longer
-active** of **not recognised**. De hulpknop werkt in alle gevallen, ook als
-de server onbereikbaar is: een bandje mag hulp nooit blokkeren. De aanvraag
-start pas na een druk op de knop, niet automatisch bij het aantikken.
+active** of **not recognised**. De hulpknop werkt in alle gevallen: een
+inactief of onbekend bandje geeft een gewone aanvraag. De aanvraag start pas
+na een druk op de knop, niet automatisch bij het aantikken; het token gaat
+dan mee, zodat vrijwilligers het bandje zien.
 
 ### Beveiliging
 
@@ -246,10 +272,10 @@ pip install -r requirements.txt
 ARDUINO_PORT=/dev/cu.usbserial-120 python bridge.py
 ```
 
-Zolang `volunteer.html` open is, vraagt de pagina elke 1,5 seconde om
-tikken; elke tik wordt een hypothetisch verzoek op de kaart. **Alle
-locaties zijn hypothetisch.** De verzoeken staan in `tap-request-store.js`
-(`linked.tap-requests.v1`, maximaal 20).
+Zolang `volunteer.html` op `localhost` open is (en de vrijwilliger is
+ingelogd), vraagt de pagina elke 1,5 seconde om tikken. Elke tik wordt een
+gedeelde hulpaanvraag op de server, zichtbaar op elk apparaat. Op de gehoste
+site zoekt de pagina de brug niet.
 
 ### Hosting op Vercel
 
@@ -287,18 +313,15 @@ serverless-instantie bijgehouden en is op Vercel dus minder streng.
 
 ### Wat nog ontbreekt (bewust niet verzonnen)
 
-- **Publieke HTTPS-hosting.** Telefoons moeten de server kunnen bereiken.
-  Waar Linked draait (domein, hosting, TLS) is nog niet besloten. Tot dan
-  werkt aantikken alleen als de telefoon `LINKED_PUBLIC_BASE_URL` kan openen.
-  Kies een kort adres: het staat op elk bandje en kan later niet veranderen
-  zonder alle bandjes opnieuw te schrijven.
-- **Echte verzending van hulpaanvragen.** De bestaande hulpflow is nog een
-  lokale demo (localStorage); het bandje opent die flow, maar maakt er geen
-  echte melding van.
+- **Eigen domein.** Linked draait op `linked-mu-jet.vercel.app`. Dat adres
+  staat op elk bandje; een eigen domein betekent alle bandjes opnieuw
+  schrijven.
+- **Echte locaties en pushmeldingen.** Locaties zijn hypothetisch en
+  vrijwilligers zien nieuwe aanvragen alleen met de pagina open.
 - **Organisaties.** Er zijn evenementen; een apart organisatiemodel is niet
   toegevoegd omdat de opdracht het niet beschrijft.
-- **Vrijwilligersaccounts.** De rol `volunteer` bestaat in de database, maar
-  `volunteer.html` gebruikt nog geen inlog.
+- **Wachtwoord wijzigen.** Accounts maak je met `server.manage`; er is nog
+  geen opdracht om een wachtwoord te wijzigen.
 
 ### Testplan
 
@@ -368,12 +391,16 @@ geen gebruikerstest op een echte telefoon.
 
 - `index.html`: één gebruikersscherm met vaste knoppen en statusvelden.
 - `styles.css`: de bestaande groene stijl, kaarten en mobiele indeling.
-- `app.js`: vier statussen, twee acties en één ontvangsttimer.
-- `app.test.cjs`: reproduceerbare controles zonder extra dependencies.
+- `app.js`: aanvraag maken, status volgen (elke 3 s) en annuleren via de API.
+- `volunteer.js`: inloggen, gedeelde lijst ophalen, melden, accepteren.
+- `request-store.js`: wat dit apparaat onthoudt (eigen aanvraag, beschikbaarheid).
+- `geo.js`: afstanden voor de vrijwilligerskaart.
+- `server/help_requests.py`: de regels voor hulpaanvragen op de server.
+- `app.test.cjs`, `volunteer.test.cjs`: browsertests tegen een nep-backend
+  (`test-fake-server.cjs`) met meerdere apparaten tegelijk.
 
-De code bevat Nederlandse uitleg en korte, verticaal opgemaakte regels.
-`render()` past tekst en zichtbaarheid aan; eventhandlers veranderen de
-status. De ontvangsttimer is de enige asynchrone stap.
+De code bevat Nederlandse uitleg. `render()` past tekst en zichtbaarheid aan;
+eventhandlers veranderen de status.
 
 ## Bewaarde uitgebreide versie
 

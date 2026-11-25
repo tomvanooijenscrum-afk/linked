@@ -1,30 +1,44 @@
-const inboxStatus = document.querySelector("#inbox-status");
-const availabilityCard = document.querySelector("#availability-card");
-const availabilityToggle = document.querySelector("#availability-toggle");
-const availabilityValue = document.querySelector("#availability-value");
-const availabilityHint = document.querySelector("#availability-hint");
-const pendingRequestCard = document.querySelector("#pending-request");
-const acceptedRequestCard = document.querySelector("#accepted-request");
-const emptyState = document.querySelector("#empty-state");
-const unavailableState = document.querySelector("#unavailable-state");
-const requestReceived = document.querySelector("#request-received");
-const openRequestButton = document.querySelector("#open-request");
-const requestDetails = document.querySelector("#request-details");
-const acceptRequestButton = document.querySelector("#accept-request");
-const nearbyStatus = document.querySelector("#nearby-status");
-const requestsMap = document.querySelector("#requests-map");
-const tapRequestList = document.querySelector("#tap-request-list");
-const clearTapRequestsButton = document.querySelector("#clear-tap-requests");
-const tapAlert = document.querySelector("#tap-alert");
-const tapAlertText = document.querySelector("#tap-alert-text");
-const dismissTapAlertButton = document.querySelector("#dismiss-tap-alert");
-const readerStatus = document.querySelector("#reader-status");
+// Vrijwilligerspagina. De aanvragen staan op de server; elk apparaat van
+// een ingelogde vrijwilliger vraagt ze regelmatig op, zodat iedereen
+// dezelfde lijst ziet en een acceptatie overal doorkomt.
+const $ = (id) => document.getElementById(id);
+const el = {
+  pageMessage: $("page-message"),
+  signedInAs: $("signed-in-as"),
+  signOut: $("sign-out"),
+  signinCard: $("signin-card"),
+  signinForm: $("signin-form"),
+  signinUsername: $("signin-username"),
+  signinPassword: $("signin-password"),
+  signinError: $("signin-error"),
+  signinSubmit: $("signin-submit"),
+  volunteerArea: $("volunteer-area"),
+  availabilityCard: $("availability-card"),
+  availabilityToggle: $("availability-toggle"),
+  availabilityValue: $("availability-value"),
+  availabilityHint: $("availability-hint"),
+  nearbyStatus: $("nearby-status"),
+  requestsMap: $("requests-map"),
+  requestList: $("tap-request-list"),
+  clearRequests: $("clear-tap-requests"),
+  alert: $("tap-alert"),
+  alertText: $("tap-alert-text"),
+  dismissAlert: $("dismiss-tap-alert"),
+  readerStatus: $("reader-status"),
+};
 const requestStore = globalThis.LinkedRequestStore;
-const tapRequestStore = globalThis.LinkedTapRequestStore;
+const geo = globalThis.LinkedGeo;
 const requestMap = globalThis.LinkedRequestMap;
+const api = globalThis.LinkedWristbandApi.createApi();
 
-// De lokale NFC-brug meldt tikken van polsbandjes; zie nfc/bridge/bridge.py.
+const volunteerRoles = new Set(["volunteer", "admin"]);
+const requestPollInterval = 3000;
+// De lokale NFC-brug (nfc/bridge/bridge.py) draait alleen op de computer
+// met de lezer. Op de gehoste site wordt hij niet gezocht.
 const bridgeUrl = "http://127.0.0.1:5001";
+const bridgeEnabled = ["localhost", "127.0.0.1", "[::1]"].includes(
+  globalThis.location?.hostname,
+);
 const tapPollInterval = 1500;
 const readerMessages = {
   starting: "Wristband reader: starting…",
@@ -33,17 +47,39 @@ const readerMessages = {
     "Wristband reader: Arduino not connected. Close Serial Monitor if it is open.",
 };
 
-let currentRequest = null;
+const errorMessages = {
+  ALREADY_ACCEPTED: "Another volunteer already accepted this request.",
+  REQUEST_CANCELLED: "This request was cancelled by the requester.",
+  NOT_FOUND: "This request no longer exists.",
+  INVALID_CREDENTIALS: "Wrong username or password.",
+  TOO_MANY_ATTEMPTS: "Too many attempts. Wait a few minutes and try again.",
+  FORBIDDEN: "This account cannot see help requests. Sign in as a volunteer.",
+  SERVER_OFFLINE: "Could not reach Linked. Check your internet connection.",
+};
+
+let user = null;
+let requests = [];
+let loaded = false;
+let offline = false;
+// Aanvragen die deze vrijwilliger al gezien heeft: alleen nieuwe geven een melding.
+const seenIds = new Set();
+let alertedRequestId = null;
+let pollTimer = null;
+let refreshing = false;
 let lastTapId = null;
 let isPollingTaps = false;
-// Het verzoek waarover de melding gaat; de melding verdwijnt na acceptatie.
-let alertedRequestId = null;
+let tapTimer = null;
+// Wat er nu in de lijst staat. Alleen opnieuw opbouwen als dat verandert,
+// anders verliest een toetsenbordgebruiker elke paar seconden de focus.
+let renderedList = null;
 
-function formatReceivedTime(timestamp) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(timestamp);
+function describe(code) {
+  return errorMessages[code] ?? "Something went wrong. Try again.";
+}
+
+function showPageMessage(text) {
+  el.pageMessage.textContent = text ?? "";
+  el.pageMessage.hidden = !text;
 }
 
 function formatDistance(meters) {
@@ -55,31 +91,48 @@ function formatDistance(meters) {
 function formatTime(timestamp) {
   return new Intl.DateTimeFormat(undefined, {
     timeStyle: "short",
-  }).format(timestamp);
+  }).format(Date.parse(timestamp));
 }
 
-function createTapRequestItem(request, isClosest) {
+function describeSource(request) {
+  const band = request.wristbandLabel ?? request.tagUid;
+  const event = request.eventName ? ` at ${request.eventName}` : "";
+  if (request.source === "wristband") return `wristband ${band}${event}`;
+  if (request.source === "reader") return `wristband ${band}${event} (reader)`;
+  return "via the Linked app";
+}
+
+function stateText(request, isClosest) {
+  if (request.status === "accepted") {
+    return request.acceptedByMe
+      ? "Accepted by you"
+      : `Accepted by ${request.acceptedBy ?? "a volunteer"}`;
+  }
+  return isClosest ? "Closest" : "Waiting";
+}
+
+function isAvailable() {
+  return requestStore.getAvailability() === "available";
+}
+
+function createRequestItem(request, isClosest) {
   const item = document.createElement("li");
   item.className = "tap-request";
   item.dataset.closest = String(isClosest);
+  item.dataset.status = request.status;
 
   const text = document.createElement("div");
   const title = document.createElement("p");
   title.className = "tap-request-title";
-  title.textContent = `${request.label}`;
+  title.textContent = request.label;
   const state = document.createElement("span");
   state.className = "request-state";
-  state.textContent =
-    request.status === "accepted"
-      ? "Accepted"
-      : isClosest
-        ? "Closest"
-        : "Waiting";
+  state.textContent = stateText(request, isClosest);
   title.append(state);
   const details = document.createElement("p");
   details.textContent =
     `${formatDistance(request.distanceMeters)} · ` +
-    `wristband ${request.wristbandUid} · ${formatTime(request.createdAt)}`;
+    `${describeSource(request)} · ${formatTime(request.createdAt)}`;
   text.append(title, details);
   item.append(text);
 
@@ -89,235 +142,286 @@ function createTapRequestItem(request, isClosest) {
     button.type = "button";
     button.textContent = "Accept";
     button.setAttribute("aria-label", `Accept ${request.label}`);
-    button.addEventListener("click", () => acceptTapRequest(request.id));
+    button.addEventListener("click", () => acceptRequest(request.id, button));
     item.append(button);
   }
 
   return item;
 }
 
-function renderNearby(isAvailable) {
-  // Onbeschikbaar: wachtende verzoeken blijven bewaard, maar zijn verborgen.
-  const requests = tapRequestStore
-    .getTapRequestsByDistance()
-    .filter((request) => isAvailable || request.status === "accepted");
-  const pending = requests.filter((request) => request.status === "pending");
-  const closestId = pending[0]?.id;
-  // Nummers volgen de volgorde van binnenkomst, zodat ze niet verspringen.
-  const arrival = tapRequestStore
-    .getTapRequests()
-    .map((request) => request.id);
-  const labelled = requests.map((request) => ({
+function renderRequests() {
+  const available = isAvailable();
+  // Nummers volgen de volgorde van binnenkomst (de server geeft oudste eerst).
+  const labelled = requests.map((request, index) => ({
     ...request,
-    label: `Request ${arrival.indexOf(request.id) + 1}`,
+    label: `Request ${index + 1}`,
+    distanceMeters: geo.distanceMeters(geo.volunteerLocation, request.location),
   }));
-  const mapRequests = [
-    ...labelled.filter((request) => request.id === closestId),
-    ...labelled.filter((request) => request.id !== closestId),
+  // Onbeschikbaar: wachtende aanvragen blijven bestaan, maar zijn verborgen.
+  const visible = labelled
+    .filter((request) => available || request.status === "accepted")
+    .sort((a, b) => a.distanceMeters - b.distanceMeters);
+  const pending = visible.filter((request) => request.status === "pending");
+  const closestId = pending[0]?.id;
+  const ordered = [
+    ...visible.filter((request) => request.id === closestId),
+    ...visible.filter((request) => request.id !== closestId),
   ];
 
-  tapRequestList.replaceChildren(
-    ...mapRequests.map((request) =>
-      createTapRequestItem(request, request.id === closestId),
-    ),
+  const signature = JSON.stringify(
+    ordered.map((request) => [
+      request.id,
+      request.label,
+      request.status,
+      request.acceptedBy,
+      request.id === closestId,
+    ]),
   );
-  clearTapRequestsButton.hidden =
-    tapRequestStore.getTapRequests().length === 0;
+  const listChanged = signature !== renderedList;
+  if (listChanged) {
+    renderedList = signature;
+    el.requestList.replaceChildren(
+      ...ordered.map((request) => createRequestItem(request, request.id === closestId)),
+    );
+  }
+  el.clearRequests.hidden = user?.role !== "admin" || requests.length === 0;
 
-  if (pending.length > 0) {
-    nearbyStatus.textContent =
+  let status;
+  if (!loaded) {
+    status = offline ? "Could not reach Linked. Trying again…" : "Loading requests…";
+  } else if (pending.length > 0) {
+    status =
       `${pending.length} waiting. Closest: ` +
       `${formatDistance(pending[0].distanceMeters)}.`;
-  } else if (!isAvailable) {
-    nearbyStatus.textContent =
-      "You are unavailable. Wristband requests are not shown.";
-  } else if (requests.length > 0) {
-    nearbyStatus.textContent = "All wristband requests have been accepted.";
+  } else if (!available) {
+    status = "You are unavailable. New requests are not shown.";
+  } else if (visible.length > 0) {
+    status = "All requests have been accepted.";
   } else {
-    nearbyStatus.textContent =
-      "No wristband requests yet. Tap a wristband on the reader.";
+    status = "No requests right now. New requests appear here automatically.";
+  }
+  if (loaded && offline) status += " Connection lost, trying again…";
+  el.nearbyStatus.textContent = status;
+
+  if (!available || !pending.some((request) => request.id === alertedRequestId)) {
+    el.alert.hidden = true;
   }
 
-  if (
-    !isAvailable ||
-    !pending.some((request) => request.id === alertedRequestId)
-  ) {
-    tapAlert.hidden = true;
-  }
-
-  requestMap.update(
-    requestsMap,
-    tapRequestStore.volunteerLocation,
-    mapRequests,
-  );
+  if (listChanged) requestMap.update(el.requestsMap, geo.volunteerLocation, ordered);
 }
 
 function render() {
-  currentRequest = requestStore.getRequest();
-  const isAvailable = requestStore.getAvailability() === "available";
-  const isPending = currentRequest?.status === "pending";
-  const isAccepted = currentRequest?.status === "accepted";
-  // Een wachtend verzoek blijft bewaard, maar is alleen zichtbaar
-  // als de vrijwilliger beschikbaar is.
-  const showPending = isPending && isAvailable;
+  const signedIn = user !== null && volunteerRoles.has(user.role);
+  el.signinCard.hidden = signedIn;
+  el.volunteerArea.hidden = !signedIn;
+  el.signOut.hidden = user === null;
+  el.signedInAs.hidden = user === null;
+  el.signedInAs.textContent = user ? `Signed in as ${user.username}` : "";
+  el.readerStatus.hidden = !bridgeEnabled;
+  if (!signedIn) return;
 
-  availabilityCard.dataset.state = isAvailable ? "available" : "unavailable";
-  availabilityToggle.setAttribute("aria-checked", String(isAvailable));
-  availabilityValue.textContent = isAvailable ? "Available" : "Unavailable";
-  availabilityHint.textContent = isAvailable
-    ? "New requests appear in your inbox."
-    : "New requests are paused and not shown in your inbox.";
-  pendingRequestCard.hidden = !showPending;
-  acceptedRequestCard.hidden = !isAccepted;
-  unavailableState.hidden = isAvailable || isAccepted;
-  emptyState.hidden = !isAvailable || isPending || isAccepted;
+  const available = isAvailable();
+  el.availabilityCard.dataset.state = available ? "available" : "unavailable";
+  el.availabilityToggle.setAttribute("aria-checked", String(available));
+  el.availabilityValue.textContent = available ? "Available" : "Unavailable";
+  el.availabilityHint.textContent = available
+    ? "New requests appear below."
+    : "New requests are paused and not shown.";
+  renderRequests();
+}
 
-  if (showPending) {
-    inboxStatus.textContent = "A new request is waiting for a volunteer.";
-    requestReceived.textContent =
-      `Received ${formatReceivedTime(currentRequest.createdAt)}`;
-  } else if (isAccepted) {
-    inboxStatus.textContent = "This request has been accepted.";
-  } else if (!isAvailable) {
-    inboxStatus.textContent =
-      "You are unavailable. New requests are not shown.";
+// Melding voor aanvragen die sinds de vorige keer zijn binnengekomen.
+function announceNewRequests(previouslyLoaded) {
+  const fresh = requests.filter(
+    (request) => request.status === "pending" && !seenIds.has(request.id),
+  );
+  requests.forEach((request) => seenIds.add(request.id));
+  if (!previouslyLoaded || fresh.length === 0 || !isAvailable()) return;
+
+  const newest = fresh[fresh.length - 1];
+  const distance = geo.distanceMeters(geo.volunteerLocation, newest.location);
+  alertedRequestId = newest.id;
+  const who =
+    newest.source === "app"
+      ? "Someone asked for help"
+      : `Wristband ${newest.wristbandLabel ?? newest.tagUid} asked for help`;
+  el.alertText.textContent =
+    `${who} just now, ${formatDistance(distance)}. See the map below.`;
+  el.alert.hidden = false;
+}
+
+async function refresh() {
+  if (refreshing || !user) return;
+  refreshing = true;
+  const result = await api.listHelpRequests();
+  refreshing = false;
+
+  if (result.ok) {
+    offline = false;
+    const previouslyLoaded = loaded;
+    requests = result.requests;
+    loaded = true;
+    announceNewRequests(previouslyLoaded);
+  } else if (result.httpStatus === 401 || result.httpStatus === 403) {
+    // Sessie verlopen of rol ingetrokken.
+    stop();
+    user = null;
+    if (result.httpStatus === 403) showPageMessage(describe("FORBIDDEN"));
   } else {
-    inboxStatus.textContent = "No pending requests right now.";
+    offline = true;
   }
+  render();
+}
 
-  if (!showPending) {
-    requestDetails.hidden = true;
-    openRequestButton.setAttribute("aria-expanded", "false");
+function schedule() {
+  clearTimeout(pollTimer);
+  pollTimer = setTimeout(async () => {
+    // Op de achtergrond niet vragen: scheelt batterij en serververzoeken.
+    if (document.visibilityState !== "hidden") await refresh();
+    if (user) schedule();
+  }, requestPollInterval);
+}
+
+function stop() {
+  clearTimeout(pollTimer);
+  clearTimeout(tapTimer);
+  pollTimer = null;
+  tapTimer = null;
+}
+
+async function start() {
+  showPageMessage(null);
+  render();
+  await refresh();
+  if (!user) return;
+  schedule();
+  if (bridgeEnabled) pollTaps();
+}
+
+async function acceptRequest(requestId, button) {
+  if (!isAvailable()) {
+    render();
+    return;
   }
-  acceptRequestButton.disabled = !showPending;
-  renderNearby(isAvailable);
+  button.disabled = true;
+  const result = await api.acceptHelpRequest(requestId);
+  if (!result.ok) {
+    showPageMessage(describe(result.error));
+  } else {
+    showPageMessage(null);
+  }
+  await refresh();
+}
+
+async function clearRequests() {
+  const result = await api.clearHelpRequests();
+  if (!result.ok) showPageMessage(describe(result.error));
+  alertedRequestId = null;
+  await refresh();
 }
 
 function toggleAvailability() {
-  const nextStatus =
-    requestStore.getAvailability() === "available"
-      ? "unavailable"
-      : "available";
-  requestStore.setAvailability(nextStatus);
+  requestStore.setAvailability(isAvailable() ? "unavailable" : "available");
   render();
 }
 
-function toggleRequestDetails() {
-  const isOpen = !requestDetails.hidden;
-  requestDetails.hidden = isOpen;
-  openRequestButton.setAttribute("aria-expanded", String(!isOpen));
-  if (isOpen) {
-    openRequestButton.focus();
-  } else {
-    acceptRequestButton.focus();
-  }
+function dismissAlert() {
+  el.alert.hidden = true;
+  alertedRequestId = null;
+  el.nearbyStatus.focus();
 }
 
-function acceptRequest() {
-  if (
-    requestStore.getAvailability() !== "available" ||
-    !currentRequest ||
-    currentRequest.status !== "pending"
-  ) {
-    render();
-    return;
-  }
-
-  acceptRequestButton.disabled = true;
-  const acceptedRequest = requestStore.acceptRequest(currentRequest.id);
-  if (!acceptedRequest) {
-    render();
-    return;
-  }
-
-  currentRequest = acceptedRequest;
-  render();
-}
-
-function acceptTapRequest(requestId) {
-  if (requestStore.getAvailability() !== "available") {
-    render();
-    return;
-  }
-
-  tapRequestStore.acceptTapRequest(requestId);
-  render();
-}
-
-function clearTapRequests() {
-  tapRequestStore.clearTapRequests();
-  render();
-}
-
-// Voor deze demo geldt elk polsbandje als geregistreerd en telt elke tik
-// als een nieuw persoon op een hypothetische plek in de buurt.
-function handleTap(tap) {
-  const request = tapRequestStore.createTapRequest(tap.uid);
-  if (!request) {
-    return;
-  }
-
-  if (requestStore.getAvailability() === "available") {
-    const distance = tapRequestStore.distanceMeters(
-      tapRequestStore.volunteerLocation,
-      request.location,
-    );
-    alertedRequestId = request.id;
-    tapAlertText.textContent =
-      `Wristband ${tap.uid} was tapped just now, ` +
-      `${formatDistance(distance)}. See the map below.`;
-    tapAlert.hidden = false;
-  }
-  render();
+// Een tik op de lezer van deze vrijwilliger wordt een gedeelde aanvraag.
+async function handleTap(tap) {
+  const result = await api.createHelpRequest({ tagUid: tap.uid });
+  if (!result.ok) showPageMessage(describe(result.error));
 }
 
 async function pollTaps() {
-  if (isPollingTaps) {
-    return;
-  }
+  if (isPollingTaps || !user) return;
 
   isPollingTaps = true;
   try {
     const query = lastTapId === null ? "" : `?after=${lastTapId}`;
     const response = await fetch(`${bridgeUrl}/api/nfc/taps${query}`);
     const result = await response.json();
-    readerStatus.textContent =
+    el.readerStatus.textContent =
       readerMessages[result.reader] ?? readerMessages.starting;
 
     // Bij de eerste vraag tellen eerdere tikken niet mee.
-    if (lastTapId !== null) {
-      result.taps.forEach(handleTap);
+    if (lastTapId !== null && result.taps.length > 0) {
+      for (const tap of result.taps) await handleTap(tap);
+      await refresh();
     }
     lastTapId = result.latest;
   } catch {
-    readerStatus.textContent =
+    el.readerStatus.textContent =
       "Wristband reader: bridge offline. Start nfc/bridge/bridge.py.";
   } finally {
     isPollingTaps = false;
+    if (user) tapTimer = setTimeout(pollTaps, tapPollInterval);
   }
 }
 
-function dismissTapAlert() {
-  tapAlert.hidden = true;
-  alertedRequestId = null;
-  nearbyStatus.focus();
+async function signIn(event) {
+  event.preventDefault();
+  el.signinSubmit.disabled = true;
+  const result = await api.login(el.signinUsername.value, el.signinPassword.value);
+  el.signinSubmit.disabled = false;
+  el.signinPassword.value = "";
+  if (!result.ok) {
+    el.signinError.textContent = describe(result.error);
+    el.signinError.hidden = false;
+    return;
+  }
+  el.signinError.hidden = true;
+  user = result.user;
+  if (!volunteerRoles.has(user.role)) {
+    showPageMessage(describe("FORBIDDEN"));
+    render();
+    return;
+  }
+  await start();
+}
+
+async function signOut() {
+  stop();
+  await api.logout();
+  user = null;
+  requests = [];
+  loaded = false;
+  renderedList = null;
+  seenIds.clear();
+  el.alert.hidden = true;
+  render();
+}
+
+async function checkSession() {
+  const result = await api.me();
+  if (result.ok) {
+    user = result.user;
+    if (volunteerRoles.has(user.role)) {
+      await start();
+      return;
+    }
+    showPageMessage(describe("FORBIDDEN"));
+  } else if (result.httpStatus !== 401) {
+    showPageMessage(describe(result.error));
+  }
+  render();
 }
 
 globalThis.addEventListener("storage", (event) => {
-  if (
-    event.key === requestStore.storageKey ||
-    event.key === requestStore.availabilityKey ||
-    event.key === tapRequestStore.storageKey
-  ) {
-    render();
-  }
+  if (event.key === requestStore.availabilityKey) render();
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && user) refresh();
 });
 
-openRequestButton.addEventListener("click", toggleRequestDetails);
-acceptRequestButton.addEventListener("click", acceptRequest);
-availabilityToggle.addEventListener("click", toggleAvailability);
-dismissTapAlertButton.addEventListener("click", dismissTapAlert);
-clearTapRequestsButton.addEventListener("click", clearTapRequests);
-render();
-pollTaps();
-setInterval(pollTaps, tapPollInterval);
+el.signinForm.addEventListener("submit", signIn);
+el.signOut.addEventListener("click", signOut);
+el.availabilityToggle.addEventListener("click", toggleAvailability);
+el.dismissAlert.addEventListener("click", dismissAlert);
+el.clearRequests.addEventListener("click", clearRequests);
+
+globalThis.LinkedVolunteer = Object.freeze({ ready: checkSession() });

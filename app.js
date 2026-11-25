@@ -1,3 +1,5 @@
+// Hulppagina van de aanvrager. De aanvraag gaat naar de server, zodat
+// vrijwilligers hem op elk apparaat zien; deze pagina volgt de status.
 const requestButton = document.querySelector("#request-button");
 const requestButtonLabel = document.querySelector("#request-button-label");
 const cancelButton = document.querySelector("#cancel-button");
@@ -7,28 +9,31 @@ const requestMap = document.querySelector("#request-map");
 const soundToggle = document.querySelector("#sound-toggle");
 const soundToggleLabel = document.querySelector("#sound-toggle-label");
 const requestStore = globalThis.LinkedRequestStore;
+const api = globalThis.LinkedWristbandApi.createApi();
+
+// Hoe vaak de pagina vraagt of een vrijwilliger heeft geaccepteerd.
+const statusPollInterval = 3000;
 
 let activeRequest = requestStore.getRequest();
 let requestStatus = getStatusFromRequest(activeRequest);
-let receiptTimer = null;
-
-let requestNumber = 0;
-const receiptDelay = 1500;
+let pollTimer = null;
+let busy = false;
+// Verhoogd bij elke nieuwe aanvraag of annulering: oude antwoorden negeren.
+let generation = 0;
 
 const statusMessages = {
   idle: {
     title: "No active request",
     description: "You haven’t asked for help yet.",
   },
-  sent: {
-    title: "Request sent (demo)",
-    description:
-      "Waiting for a simulated receipt confirmation.",
+  sending: {
+    title: "Sending your request…",
+    description: "One moment.",
   },
   received: {
-    title: "Receipt simulated (demo)",
+    title: "Request sent",
     description:
-      "Your request is available to volunteers in this demo inbox.",
+      "Volunteers nearby can see your request. This page shows when someone accepts it.",
   },
   accepted: {
     title: "A volunteer is on the way",
@@ -39,6 +44,16 @@ const statusMessages = {
     title: "Request cancelled",
     description:
       "Your request has stopped. You can ask for help again.",
+  },
+  failed: {
+    title: "Your request could not be sent",
+    description:
+      "Check your internet connection and try again. In an emergency, call 112.",
+  },
+  cancelFailed: {
+    title: "Could not cancel yet",
+    description:
+      "Your request is still open. Check your internet connection and try again.",
   },
 };
 
@@ -96,9 +111,10 @@ function toggleSound() {
 
 function isRequestActive() {
   return (
-    requestStatus === "sent" ||
+    requestStatus === "sending" ||
     requestStatus === "received" ||
-    requestStatus === "accepted"
+    requestStatus === "accepted" ||
+    requestStatus === "cancelFailed"
   );
 }
 
@@ -112,60 +128,127 @@ function getStatusFromRequest(request) {
   return "received";
 }
 
-function startRequest() {
-  playSound("press");
-
-  if (isRequestActive()) {
-    return;
-  }
-
-  requestNumber += 1;
-  const currentRequest = requestNumber;
-  activeRequest = requestStore.createRequest();
-  requestStatus = "sent";
-  playSound("sent");
-  render();
-
-  receiptTimer = setTimeout(() => {
-    if (
-      currentRequest !== requestNumber ||
-      requestStatus !== "sent"
-    ) {
-      return;
-    }
-
-    receiptTimer = null;
-    requestStatus = "received";
-    playSound("received");
-    render();
-  }, receiptDelay);
-
-  cancelButton.focus();
+function stopPolling() {
+  clearTimeout(pollTimer);
+  pollTimer = null;
 }
 
-function cancelRequest() {
-  playSound("press");
+// Alleen een wachtende aanvraag hoeft gevolgd te worden.
+function schedulePoll() {
+  stopPolling();
+  if (activeRequest?.status === "pending") {
+    pollTimer = setTimeout(pollStatus, statusPollInterval);
+  }
+}
 
-  if (!isRequestActive()) {
+function applyServerRequest(serverRequest) {
+  const wasAccepted = activeRequest?.status === "accepted";
+  activeRequest = requestStore.saveRequest(serverRequest, activeRequest.secret);
+  requestStatus = getStatusFromRequest(activeRequest);
+  if (!wasAccepted && requestStatus === "accepted") {
+    playSound("received");
+  }
+}
+
+async function pollStatus() {
+  pollTimer = null;
+  if (!activeRequest) {
     return;
   }
 
-  clearTimeout(receiptTimer);
-  receiptTimer = null;
-  requestNumber += 1;
-  const cancelledRequest = requestStore.cancelRequest(activeRequest.id);
-  if (!cancelledRequest) {
-    activeRequest = requestStore.getRequest();
-    requestStatus = getStatusFromRequest(activeRequest);
+  const current = generation;
+  const result = await api.helpRequestStatus(activeRequest.id, activeRequest.secret);
+  if (current !== generation || !activeRequest) {
+    return;
+  }
+
+  if (result.ok) {
+    applyServerRequest(result.request);
+    render();
+  } else if (result.httpStatus === 404) {
+    // Niet meer op de server (bijvoorbeeld opgeruimd na een demo).
+    requestStore.clearRequest();
+    activeRequest = null;
+    requestStatus = "idle";
     render();
     return;
   }
-  activeRequest = cancelledRequest;
-  requestStatus = getStatusFromRequest(activeRequest);
-  playSound("cancelled");
-  render();
+  // Bij een netwerkfout gewoon later opnieuw proberen.
+  schedulePoll();
+}
 
-  requestButton.focus();
+async function startRequest() {
+  playSound("press");
+
+  if (isRequestActive() || busy) {
+    return;
+  }
+
+  busy = true;
+  generation += 1;
+  const current = generation;
+  stopPolling();
+  requestStatus = "sending";
+  render();
+  cancelButton.focus();
+
+  const token = globalThis.LinkedWristbandTap?.token ?? null;
+  const result = await api.createHelpRequest({ token });
+  busy = false;
+  if (current !== generation) {
+    return;
+  }
+
+  if (!result.ok) {
+    requestStatus = "failed";
+    render();
+    requestButton.focus();
+    return;
+  }
+
+  activeRequest = requestStore.saveRequest(result.request, result.secret);
+  requestStatus = getStatusFromRequest(activeRequest);
+  playSound("sent");
+  render();
+  schedulePoll();
+}
+
+async function cancelRequest() {
+  playSound("press");
+
+  if (!isRequestActive() || !activeRequest || busy) {
+    return;
+  }
+
+  busy = true;
+  generation += 1;
+  const current = generation;
+  stopPolling();
+  cancelButton.disabled = true;
+
+  const result = await api.cancelHelpRequest(activeRequest.id, activeRequest.secret);
+  busy = false;
+  if (current !== generation) {
+    return;
+  }
+
+  if (result.ok) {
+    applyServerRequest(result.request);
+    playSound("cancelled");
+    render();
+    requestButton.focus();
+    return;
+  }
+
+  if (result.httpStatus === 404) {
+    requestStore.clearRequest();
+    activeRequest = null;
+    requestStatus = "cancelled";
+  } else {
+    requestStatus = "cancelFailed";
+    schedulePoll();
+  }
+  render();
 }
 
 function render() {
@@ -175,33 +258,46 @@ function render() {
   statusTitle.textContent = message.title;
   statusDescription.textContent = message.description;
   requestButton.hidden = active;
-  requestButton.disabled = active;
+  requestButton.disabled = active || busy;
   cancelButton.hidden = !active;
-  cancelButton.disabled = !active;
-  requestButtonLabel.textContent = requestStatus === "cancelled"
-    ? "Ask for help again"
-    : "Ask for help";
+  cancelButton.disabled = !active || busy || requestStatus === "sending";
+  requestButtonLabel.textContent =
+    requestStatus === "cancelled" || requestStatus === "failed"
+      ? requestStatus === "failed"
+        ? "Try again"
+        : "Ask for help again"
+      : "Ask for help";
 
   requestMap.dataset.status =
-    requestStatus === "accepted" ? "received" : requestStatus;
+    requestStatus === "accepted" || requestStatus === "cancelFailed"
+      ? "received"
+      : requestStatus === "sending"
+        ? "sent"
+        : requestStatus === "failed"
+          ? "idle"
+          : requestStatus;
   soundToggle.setAttribute("aria-pressed", String(soundEnabled));
   soundToggleLabel.textContent = soundEnabled ? "Sound on" : "Sound off";
 }
 
+// Een ander tabblad op dit apparaat heeft de aanvraag gewijzigd.
 globalThis.addEventListener("storage", (event) => {
   if (event.key !== requestStore.storageKey) {
     return;
   }
 
-  clearTimeout(receiptTimer);
-  receiptTimer = null;
-  requestNumber += 1;
+  generation += 1;
   activeRequest = requestStore.getRequest();
   requestStatus = getStatusFromRequest(activeRequest);
   render();
+  schedulePoll();
 });
 
 requestButton.addEventListener("click", startRequest);
 cancelButton.addEventListener("click", cancelRequest);
 soundToggle.addEventListener("click", toggleSound);
 render();
+// Na herladen: direct de laatste stand van de server ophalen.
+if (activeRequest && activeRequest.status !== "cancelled") {
+  pollStatus();
+}

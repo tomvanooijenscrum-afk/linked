@@ -1,7 +1,7 @@
 // Geopend door een NFC-polsbandje (…/?t=<token>): laat zien of het bandje
 // herkend wordt. De hulpknop werkt altijd, ook als het bandje inactief of
-// onbekend is of de server niet bereikbaar is. Het token is geen
-// inloggegeven en wordt nergens anders voor gebruikt.
+// onbekend is. Het token is geen inloggegeven; het gaat alleen mee met een
+// hulpaanvraag (app.js), zodat vrijwilligers zien om welk bandje het gaat.
 ((global) => {
   const notice = document.querySelector("#wristband-notice");
   const title = document.querySelector("#wristband-notice-title");
@@ -48,8 +48,9 @@
     return token;
   }
 
+  const token = takeToken();
+
   async function checkWristband() {
-    const token = takeToken();
     if (token === null) return;
 
     show("checking");
@@ -62,5 +63,5 @@
     show(known ? result.status : "unknown", result.eventName);
   }
 
-  global.LinkedWristbandTap = Object.freeze({ ready: checkWristband() });
+  global.LinkedWristbandTap = Object.freeze({ token, ready: checkWristband() });
 })(globalThis);
