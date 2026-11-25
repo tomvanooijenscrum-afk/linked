@@ -1,0 +1,7 @@
+# Alleen de statische webapp naar Vercel; backend en firmware blijven lokaal.
+server/
+nfc/
+*.test.cjs
+*.md
+.vscode/
+.prettierrc.json
