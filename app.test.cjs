@@ -62,6 +62,7 @@ function setup({ server = createFakeServer(), storage = createStorage(), token =
   }
 
   const phone = server.device();
+  const confetti = [];
   const context = vm.createContext({
     localStorage: storage,
     fetch: phone.fetch,
@@ -71,6 +72,7 @@ function setup({ server = createFakeServer(), storage = createStorage(), token =
         String(args[0]).startsWith("Could not reach") || console.error(...args),
     },
     LinkedWristbandTap: { token },
+    LinkedConfetti: { fire: (origin) => confetti.push(origin) },
     addEventListener(name, callback) {
       globalListeners[name] = callback;
     },
@@ -100,6 +102,7 @@ function setup({ server = createFakeServer(), storage = createStorage(), token =
     elements,
     timers,
     store: context.LinkedRequestStore,
+    confetti,
     click(selector) {
       return elements.get(selector).listeners.click();
     },
@@ -147,6 +150,7 @@ const posts = (server) =>
   // 2. Nog niemand: blijft wachten. Een vrijwilliger accepteert ergens anders.
   await app.runPoll();
   assert.equal(app.title(), "Request sent");
+  assert.equal(app.confetti.length, 0, "Nog geen confetti zonder acceptatie");
   const statusCall = app.server.state.calls.at(-1);
   assert.equal(statusCall.path, "/api/help-requests/req-1");
   assert.equal(statusCall.headers["X-Linked-Secret"], "secret-req-1", "Geheim in header");
@@ -155,6 +159,8 @@ const posts = (server) =>
   app.server.state.requests[0].acceptedAt = "2026-11-26T21:00:00+00:00";
   await app.runPoll();
   assert.equal(app.title(), "A volunteer is on the way");
+  assert.equal(app.confetti.length, 1, "Confetti bij acceptatie");
+  assert.equal(app.confetti[0], app.elements.get("#status-title"), "Vanuit de statusmelding");
   assert.equal(app.timers.size, 0, "Na acceptatie niet meer vragen");
   assert.equal(app.store.getRequest().status, "accepted");
 
@@ -163,6 +169,7 @@ const posts = (server) =>
   assert.equal(app.title(), "Request cancelled");
   assert.equal(app.label(), "Ask for help again");
   assert.equal(app.server.state.requests[0].status, "cancelled");
+  assert.equal(app.confetti.length, 1, "Geen confetti bij annuleren");
   assert.equal(app.mapStatus(), "cancelled");
 
   // 4. Geopend met een polsbandje: het token gaat mee.
@@ -205,6 +212,12 @@ const posts = (server) =>
   await settle();
   await settle();
   assert.equal(reloaded.title(), "A volunteer is on the way");
+  assert.equal(reloaded.confetti.length, 1, "Eerste keer geaccepteerd gezien: confetti");
+  const again = setup({ server, storage });
+  await settle();
+  await settle();
+  assert.equal(again.title(), "A volunteer is on the way");
+  assert.equal(again.confetti.length, 0, "Al geaccepteerd bewaard: niet opnieuw");
 
   // 8. Aanvraag verdwenen op de server (opgeruimd): terug naar begin.
   server.state.requests = [];
@@ -239,7 +252,7 @@ const posts = (server) =>
 
   console.log(
     "Passed: request goes to the server, double clicks, status polling with the " +
-      "secret in a header, accepted elsewhere, cancel, wristband token, offline and " +
+      "secret in a header, accepted elsewhere with confetti once, cancel, wristband token, offline and " +
       "retry, cancel offline, reload, removed on server, other tab, broken storage.",
   );
 })().catch((error) => {

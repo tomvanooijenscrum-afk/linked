@@ -147,6 +147,8 @@ function applyServerRequest(serverRequest) {
   requestStatus = getStatusFromRequest(activeRequest);
   if (!wasAccepted && requestStatus === "accepted") {
     playSound("received");
+    // Alleen bij de overgang naar geaccepteerd, niet na herladen.
+    globalThis.LinkedConfetti?.fire(statusTitle);
   }
 }
 

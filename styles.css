@@ -365,6 +365,21 @@ h2 {
   color: var(--green);
 }
 
+/* Confetti bij een geaccepteerde aanvraag (confetti.js). */
+.confetti-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  pointer-events: none;
+  perspective: 800px;
+}
+
+.confetti-piece {
+  position: absolute;
+  will-change: transform, opacity;
+}
+
 [hidden] {
   display: none !important;
 }

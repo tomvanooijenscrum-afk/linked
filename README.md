@@ -355,6 +355,7 @@ Met Node.js geïnstalleerd:
 
 ```powershell
 node app.test.cjs
+node confetti.test.cjs
 node volunteer.test.cjs
 node wristbands.test.cjs
 node wristband-tap.test.cjs
