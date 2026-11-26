@@ -4,10 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#183e37" />
-    <title>Linked | Wristbands</title>
+    <meta name="referrer" content="no-referrer" />
+    <title>Linked | NFC Wristbands</title>
     <link rel="stylesheet" href="volunteer.css" />
     <link rel="stylesheet" href="wristbands.css" />
-    <script src="wristband-store.js" defer></script>
+    <script src="nfc-serial.js" defer></script>
+    <script src="wristband-api.js" defer></script>
     <script src="wristbands.js" defer></script>
   </head>
   <body>
@@ -16,143 +18,193 @@
         <b aria-hidden="true">↗</b>
         linked<span>.</span>
       </span>
-      <nav class="header-links" aria-label="Volunteer navigation"><a class="back-link" href="volunteer.html">Requests</a><a class="back-link" href="wristbands.html" aria-current="page">Wristbands</a></nav>
+      <nav class="header-links" aria-label="Admin navigation">
+        <a class="back-link" href="volunteer.html">Requests</a>
+        <a class="back-link" href="wristbands.html" aria-current="page">Wristbands</a>
+        <span id="signed-in-as" class="signed-in" hidden></span>
+        <button id="sign-out" class="back-link link-button" type="button" hidden>
+          Sign out
+        </button>
+      </nav>
     </header>
 
     <main>
       <section class="intro" aria-labelledby="page-title">
-        <span class="eyebrow">WRISTBAND MANAGEMENT</span>
+        <span class="eyebrow">ADMIN · NFC WRISTBANDS</span>
         <h1 id="page-title">Program a wristband, <em>tap to help.</em></h1>
         <p>
-          Connect the NFC writer, register a wristband and write its Linked
-          link to a blank NTAG213 tag.
+          Connect the NFC reader, register blank NTAG213 wristbands and manage
+          which ones open Linked when tapped.
         </p>
       </section>
 
-      <section class="inbox-card" aria-labelledby="writer-title">
+      <p id="page-message" class="page-message" role="alert" hidden></p>
+
+      <!-- Inloggen: de server controleert de rol bij elke aanvraag. -->
+      <section id="signin-card" class="inbox-card" aria-labelledby="signin-title" hidden>
         <div class="card-top">
-          <span class="eyebrow">NFC WRITER</span>
-          <span class="inbox-badge">LOCAL</span>
+          <span class="eyebrow">ADMINISTRATORS ONLY</span>
         </div>
-        <h2 id="writer-title">Arduino writer</h2>
-        <p
-          id="bridge-status"
-          class="inbox-status"
-          role="status"
-          aria-live="polite"
-        >
-          Arduino not connected.
-        </p>
-        <div class="button-row">
-          <button
-            id="connect-arduino"
-            class="secondary"
-            type="button"
-          >
-            Connect Arduino
+        <h2 id="signin-title">Sign in</h2>
+        <form id="signin-form" class="stacked-form">
+          <label for="signin-username">Username</label>
+          <input id="signin-username" name="username" autocomplete="username" required />
+          <label for="signin-password">Password</label>
+          <input
+            id="signin-password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+          <p id="signin-error" class="field-error" role="alert" hidden></p>
+          <button id="signin-submit" class="primary" type="submit">
+            Sign in <span aria-hidden="true">↗</span>
           </button>
-          <button
-            id="scan-tag"
-            class="secondary"
-            type="button"
-          >
-            Scan NFC tag
-          </button>
-        </div>
+        </form>
       </section>
 
-      <section class="inbox-card" aria-labelledby="register-title">
-        <div class="card-top">
-          <span class="eyebrow">NEW WRISTBAND</span>
-        </div>
-        <h2 id="register-title">Register and program</h2>
-
-        <form id="base-url-form" class="base-url-form">
-          <label for="base-url">Linked address (HTTPS)</label>
-          <div class="base-url-row">
-            <input
-              id="base-url"
-              type="url"
-              inputmode="url"
-              placeholder="https://your-domain.nl"
-              autocomplete="off"
-              aria-describedby="base-url-hint"
-              required
-            />
-            <button
-              id="save-base-url"
-              class="secondary"
-              type="submit"
-            >
-              Save
+      <div id="admin-area" hidden>
+        <!-- 1. Lezer -->
+        <section class="inbox-card" aria-labelledby="reader-title">
+          <div class="card-top">
+            <span class="eyebrow">NFC READER</span>
+            <span id="reader-state" class="reader-pill" data-state="disconnected">
+              Not connected
+            </span>
+          </div>
+          <h2 id="reader-title">Arduino reader</h2>
+          <p id="reader-message" class="inbox-status" role="status" aria-live="polite">
+            Connect the Arduino with the PN532 reader over USB.
+          </p>
+          <p id="unsupported-note" class="field-error" hidden>
+            This browser cannot talk to USB devices. Use Chrome or Edge on a
+            computer, and open Linked on http://localhost or over HTTPS.
+          </p>
+          <div class="button-row">
+            <button id="connect-reader" class="secondary" type="button">
+              Connect reader
+            </button>
+            <button id="disconnect-reader" class="secondary" type="button" hidden>
+              Disconnect
+            </button>
+            <button id="scan-tag" class="secondary" type="button">
+              Scan and identify tag
             </button>
           </div>
-          <p
-            id="base-url-hint"
-            class="field-hint"
-          >
-            Short HTTPS address of the requester page. The full wristband link
-            may be at most 40 characters after https://.
-          </p>
-        </form>
+          <dl id="scan-result" class="tag-details" hidden>
+            <dt>UID</dt>
+            <dd id="scan-uid"></dd>
+            <dt>Tag</dt>
+            <dd id="scan-type"></dd>
+            <dt>Contents</dt>
+            <dd id="scan-content"></dd>
+            <dt>Linked</dt>
+            <dd id="scan-registration"></dd>
+          </dl>
+        </section>
 
-        <button
-          id="register-wristband"
-          class="primary"
-          type="button"
-        >
-          Register wristband
-          <span aria-hidden="true">+</span>
-        </button>
-
-        <article
-          id="current-wristband"
-          class="request-card"
-          hidden
-        >
-          <div class="request-card-top">
-            <span
-              class="request-indicator"
-              aria-hidden="true"
-            ></span>
-            <span class="request-state">Pending</span>
+        <!-- 2. Registreren -->
+        <section class="inbox-card" aria-labelledby="register-title">
+          <div class="card-top">
+            <span class="eyebrow">NEW WRISTBAND</span>
           </div>
-          <h3>Ready to program</h3>
-          <p>
-            Place a blank NTAG213 wristband on the reader, then program it.
-          </p>
-          <p
-            id="current-url"
-            class="wristband-url"
-          ></p>
-          <button
-            id="program-wristband"
-            class="primary"
-            type="button"
-          >
-            Program wristband
-            <span aria-hidden="true">↗</span>
-          </button>
-        </article>
-      </section>
+          <h2 id="register-title">Register new wristband</h2>
 
-      <section class="inbox-card" aria-labelledby="list-title">
-        <div class="card-top">
-          <span class="eyebrow">REGISTERED</span>
-        </div>
-        <h2 id="list-title">Wristbands</h2>
-        <ul
-          id="wristband-list"
-          class="wristband-list"
-        ></ul>
-        <div
-          id="wristband-empty"
-          class="empty-state"
-        >
-          <span class="empty-mark" aria-hidden="true">↗</span>
-          <p>No wristbands registered yet.</p>
-        </div>
-      </section>
+          <div class="event-row">
+            <div>
+              <label for="event-select">Event</label>
+              <select id="event-select">
+                <option value="">No event</option>
+              </select>
+            </div>
+            <form id="event-form" class="event-form">
+              <label for="event-name">Add event</label>
+              <div class="inline-field">
+                <input id="event-name" maxlength="80" autocomplete="off" />
+                <button id="add-event" class="secondary" type="submit">Add</button>
+              </div>
+            </form>
+          </div>
+
+          <button id="register-button" class="primary" type="button">
+            Register new wristband <span aria-hidden="true">+</span>
+          </button>
+
+          <article id="registration" class="request-card" hidden>
+            <h3>Place a blank NTAG213 wristband on the reader</h3>
+            <ol id="step-list" class="step-list">
+              <li data-step="scan">Read tag UID</li>
+              <li data-step="check">Check for an existing registration</li>
+              <li data-step="reserve">Reserve a registration link</li>
+              <li data-step="write">Write the link to the tag</li>
+              <li data-step="verify">Read the link back</li>
+              <li data-step="confirm">Confirm with the server</li>
+            </ol>
+            <p
+              id="registration-message"
+              class="inbox-status"
+              role="status"
+              aria-live="polite"
+            ></p>
+            <p id="registration-url" class="wristband-url" hidden></p>
+            <div class="button-row">
+              <button id="activate-button" class="primary" type="button" hidden>
+                Activate wristband <span aria-hidden="true">↗</span>
+              </button>
+              <button id="overwrite-button" class="secondary" type="button" hidden>
+                Overwrite this tag
+              </button>
+              <button id="retry-button" class="secondary" type="button" hidden>
+                Try again
+              </button>
+              <button id="close-registration" class="secondary" type="button" hidden>
+                Done
+              </button>
+            </div>
+          </article>
+        </section>
+
+        <!-- 3. Overzicht -->
+        <section class="inbox-card" aria-labelledby="list-title">
+          <div class="card-top">
+            <span class="eyebrow">REGISTERED</span>
+            <span id="wristband-count" class="inbox-badge">0</span>
+          </div>
+          <h2 id="list-title">Wristbands</h2>
+          <form id="search-form" class="search-row" role="search">
+            <div>
+              <label for="search-input">Search</label>
+              <input
+                id="search-input"
+                type="search"
+                placeholder="WB-0001, UID or event"
+                autocomplete="off"
+              />
+            </div>
+            <div>
+              <label for="status-filter">Status</label>
+              <select id="status-filter">
+                <option value="all">All</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="pending">Pending</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+          </form>
+          <p id="list-message" class="inbox-status" role="status" aria-live="polite"></p>
+          <ul id="wristband-list" class="wristband-list"></ul>
+          <div id="wristband-empty" class="empty-state">
+            <span class="empty-mark" aria-hidden="true">↗</span>
+            <p>No wristbands found.</p>
+          </div>
+          <p class="demo-note">
+            A wristband only carries a random link. It never stores personal
+            data, and it is not proof of identity.
+          </p>
+        </section>
+      </div>
     </main>
   </body>
 </html>
