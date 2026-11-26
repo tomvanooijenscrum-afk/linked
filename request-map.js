@@ -5,10 +5,10 @@
     '&copy; <a href="https://www.openstreetmap.org/copyright">' +
     "OpenStreetMap contributors</a>";
   const colors = {
-    volunteer: "#183e37",
-    pending: "#c58a2e",
-    closest: "#b5461f",
-    accepted: "#8aab54",
+    volunteer: "#6847f5",
+    pending: "#e59a1a",
+    closest: "#d93a40",
+    accepted: "#7fb800",
   };
 
   let state = null;

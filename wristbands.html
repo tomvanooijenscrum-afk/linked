@@ -2,10 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#183e37" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#1d1838" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#221c44" media="(prefers-color-scheme: dark)" />
     <meta name="referrer" content="no-referrer" />
     <title>Linked | NFC Wristbands</title>
+    <link rel="stylesheet" href="theme.css" />
     <link rel="stylesheet" href="volunteer.css" />
     <link rel="stylesheet" href="wristbands.css" />
     <script src="nfc-serial.js" defer></script>
@@ -19,10 +24,11 @@
         linked<span>.</span>
       </span>
       <nav class="header-links" aria-label="Admin navigation">
+        <a class="back-link" href="index.html">Help page</a>
         <a class="back-link" href="volunteer.html">Requests</a>
         <a class="back-link" href="wristbands.html" aria-current="page">Wristbands</a>
         <span id="signed-in-as" class="signed-in" hidden></span>
-        <button id="sign-out" class="back-link link-button" type="button" hidden>
+        <button id="sign-out" class="back-link" type="button" hidden>
           Sign out
         </button>
       </nav>
@@ -32,10 +38,7 @@
       <section class="intro" aria-labelledby="page-title">
         <span class="eyebrow">ADMIN · NFC WRISTBANDS</span>
         <h1 id="page-title">Program a wristband, <em>tap to help.</em></h1>
-        <p>
-          Connect the NFC reader, register blank NTAG213 wristbands and manage
-          which ones open Linked when tapped.
-        </p>
+        <p>Connect the reader and register blank NTAG213 wristbands.</p>
       </section>
 
       <p id="page-message" class="page-message" role="alert" hidden></p>
@@ -200,8 +203,7 @@
             <p>No wristbands found.</p>
           </div>
           <p class="demo-note">
-            A wristband only carries a random link. It never stores personal
-            data, and it is not proof of identity.
+            Wristbands hold only a random link: no personal data, no ID.
           </p>
         </section>
       </div>

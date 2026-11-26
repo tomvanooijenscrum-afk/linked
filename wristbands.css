@@ -3,6 +3,11 @@
   margin-top: 20px;
 }
 
+.button-row .secondary,
+.button-row .primary {
+  justify-content: center;
+}
+
 .button-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -11,29 +16,18 @@
 
 /* ---- Kop en meldingen ---- */
 
-.signed-in {
-  font-size: 14px;
-  color: var(--muted);
-}
-
-.link-button {
-  border: 0;
-  background: none;
-  cursor: pointer;
-}
-
 .page-message {
   margin: 0 0 20px;
-  border: 1px solid #d9a3a3;
-  border-radius: 10px;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
   padding: 12px 16px;
-  background: #fbeeee;
-  color: #7a2121;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .field-error {
   margin: 8px 0 0;
-  color: #9b2c2c;
+  color: var(--danger);
   font-size: 14px;
 }
 
@@ -63,12 +57,13 @@
   min-width: 0;
   min-height: 48px;
   margin-top: 6px;
-  border: 1px solid #9cae91;
-  border-radius: 10px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
   padding: 0 14px;
-  background: #fff;
-  color: var(--green);
+  background: var(--surface);
+  color: var(--ink);
   font: inherit;
+  font-size: 16px;
 }
 
 .stacked-form input:focus-visible,
@@ -76,7 +71,8 @@
 .event-row select:focus-visible,
 .search-row input:focus-visible,
 .search-row select:focus-visible {
-  outline: 3px solid #769a40;
+  border-color: var(--violet);
+  outline: 3px solid var(--ring);
   outline-offset: 2px;
 }
 
@@ -98,6 +94,7 @@
 }
 
 .inline-field .secondary {
+  justify-content: center;
   width: auto;
   min-height: 48px;
   margin: 6px 0 0;
@@ -111,7 +108,8 @@
   gap: 6px;
   border-radius: 999px;
   padding: 4px 12px;
-  background: #eef1ea;
+  background: var(--surface-2);
+  color: var(--ink);
   font-size: 13px;
   font-weight: 600;
 }
@@ -124,13 +122,14 @@
 }
 
 .reader-pill[data-state="connected"] {
-  background: #e3efd2;
+  background: var(--success-soft);
+  color: var(--success);
 }
 
 .reader-pill[data-state="connected"]::before {
   border-radius: 50%;
-  background: var(--accent);
-  border-color: var(--accent);
+  background: currentColor;
+  border-color: currentColor;
 }
 
 .reader-pill[data-state="connecting"]::before {
@@ -180,7 +179,7 @@
   top: 4px;
   width: 24px;
   height: 24px;
-  border: 1px solid #9cae91;
+  border: 1.5px solid var(--border-strong);
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -193,7 +192,8 @@
 }
 
 .step-list li[data-state="active"]::before {
-  border: 2px solid var(--green);
+  border: 2px solid var(--violet);
+  color: var(--violet);
 }
 
 .step-list li[data-state="done"] {
@@ -202,19 +202,19 @@
 
 .step-list li[data-state="done"]::before {
   content: "✓";
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
+  border-color: var(--lime);
+  background: var(--lime);
+  color: #1d1838;
 }
 
 .step-list li[data-state="failed"] {
-  color: #9b2c2c;
+  color: var(--danger);
   font-weight: 600;
 }
 
 .step-list li[data-state="failed"]::before {
   content: "!";
-  border: 2px solid #9b2c2c;
+  border: 2px solid var(--danger);
 }
 
 .wristband-url {
@@ -257,6 +257,7 @@
 }
 
 .wristband-item .secondary {
+  justify-content: center;
   width: auto;
   min-height: 44px;
   margin: 0;
@@ -278,8 +279,3 @@
   }
 }
 
-/* Uitgeschakelde knoppen moeten er ook zo uitzien (bijv. zonder lezer). */
-.primary:disabled,
-.secondary:disabled {
-  opacity: 0.45;
-}

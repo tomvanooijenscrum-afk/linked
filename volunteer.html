@@ -2,13 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#183e37" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#1d1838" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#221c44" media="(prefers-color-scheme: dark)" />
     <title>Linked | Volunteer inbox</title>
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     />
+    <link rel="stylesheet" href="theme.css" />
     <link rel="stylesheet" href="volunteer.css" />
     <link rel="stylesheet" href="wristbands.css" />
     <script
@@ -28,10 +33,11 @@
         linked<span>.</span>
       </span>
       <nav class="header-links" aria-label="Pages">
+        <a class="back-link" href="volunteer.html" aria-current="page">Requests</a>
         <a class="back-link" href="wristbands.html">Wristbands</a>
-        <a class="back-link" href="index.html">Requester view</a>
+        <a class="back-link" href="index.html">Help page</a>
         <span id="signed-in-as" class="signed-in" hidden></span>
-        <button id="sign-out" class="back-link link-button" type="button" hidden>
+        <button id="sign-out" class="back-link" type="button" hidden>
           Sign out
         </button>
       </nav>
@@ -41,7 +47,7 @@
       <section class="intro" aria-labelledby="page-title">
         <span class="eyebrow">VOLUNTEER INBOX</span>
         <h1 id="page-title">A little help, <em>closer.</em></h1>
-        <p>Review a request and accept it when you’re ready to help.</p>
+        <p>Accept a request when you’re ready to go.</p>
       </section>
 
       <p id="page-message" class="page-message" role="alert" hidden></p>
@@ -137,7 +143,7 @@
       >
         <div class="card-top">
           <span class="eyebrow">HELP REQUESTS</span>
-          <span class="inbox-badge">LIVE</span>
+          <span class="inbox-badge live-badge">LIVE</span>
         </div>
         <h2 id="nearby-title">Requests near you</h2>
         <p
@@ -153,7 +159,7 @@
           id="requests-map"
           class="requests-map"
           role="img"
-          aria-label="Map of your demo position and nearby help requests. The list below shows the same requests."
+          aria-label="Map of nearby help requests. The list below shows the same requests."
         ></div>
         <ul class="map-legend" aria-hidden="true">
           <li><span class="legend-dot legend-you"></span>You</li>
@@ -175,15 +181,13 @@
         </p>
         <button
           id="clear-tap-requests"
-          class="secondary"
+          class="secondary btn-danger-outline"
           type="button"
         >
           Clear all requests
         </button>
         <p class="demo-note">
-          Every signed-in volunteer sees the same requests, on any device.
-          Positions are hypothetical points near Fontys Rachelsmolen, chosen at
-          random for each request. No real location is used.
+          Demo positions near Fontys · live for every volunteer.
         </p>
       </section>
       </div>

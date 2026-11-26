@@ -3,6 +3,7 @@
 const requestButton = document.querySelector("#request-button");
 const requestButtonLabel = document.querySelector("#request-button-label");
 const cancelButton = document.querySelector("#cancel-button");
+const statusBanner = document.querySelector("#request-status");
 const statusTitle = document.querySelector("#status-title");
 const statusDescription = document.querySelector("#status-description");
 const requestMap = document.querySelector("#request-map");
@@ -24,7 +25,7 @@ let generation = 0;
 const statusMessages = {
   idle: {
     title: "No active request",
-    description: "You haven’t asked for help yet.",
+    description: "Tap the button when you need someone.",
   },
   sending: {
     title: "Sending your request…",
@@ -32,28 +33,23 @@ const statusMessages = {
   },
   received: {
     title: "Request sent",
-    description:
-      "Volunteers nearby can see your request. This page shows when someone accepts it.",
+    description: "Volunteers nearby can see it. We’ll show you when one is coming.",
   },
   accepted: {
     title: "A volunteer is on the way",
-    description:
-      "Your request has been accepted. A volunteer is on the way.",
+    description: "Someone accepted your request and is coming to you.",
   },
   cancelled: {
     title: "Request cancelled",
-    description:
-      "Your request has stopped. You can ask for help again.",
+    description: "You can ask again anytime.",
   },
   failed: {
     title: "Your request could not be sent",
-    description:
-      "Check your internet connection and try again. In an emergency, call 112.",
+    description: "Check your connection and try again. Emergency? Call 112.",
   },
   cancelFailed: {
     title: "Could not cancel yet",
-    description:
-      "Your request is still open. Check your internet connection and try again.",
+    description: "Your request is still open. Check your connection and try again.",
   },
 };
 
@@ -257,6 +253,7 @@ function render() {
   const active = isRequestActive();
   const message = statusMessages[requestStatus];
 
+  statusBanner.dataset.status = requestStatus;
   statusTitle.textContent = message.title;
   statusDescription.textContent = message.description;
   requestButton.hidden = active;

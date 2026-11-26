@@ -4,12 +4,14 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#183e37" />
+    <meta name="theme-color" content="#1d1838" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#221c44" media="(prefers-color-scheme: dark)" />
     <!-- Een polsbandjeslink bevat een token: nooit als referrer doorgeven. -->
     <meta name="referrer" content="no-referrer" />
     <title>Linked | Ask for help</title>
+    <link rel="stylesheet" href="theme.css" />
     <link rel="stylesheet" href="styles.css" />
     <script src="request-store.js" defer></script>
     <script src="wristband-api.js" defer></script>
@@ -26,30 +28,28 @@
       <div class="header-actions">
         <button
           id="sound-toggle"
-          class="sound-toggle"
+          class="header-button sound-toggle"
           type="button"
           aria-pressed="true"
         >
-          <span aria-hidden="true">♪</span>
-          <span id="sound-toggle-label">Sound on</span>
+          <svg class="sound-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" />
+            <path class="sound-waves" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path class="sound-off" d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <span id="sound-toggle-label" class="visually-hidden">Sound on</span>
         </button>
-        <span class="demo-label">Demo</span>
+        <span class="pill">Demo</span>
       </div>
     </header>
 
     <main>
       <section class="intro" aria-labelledby="page-title">
-        <span class="eyebrow">A FIRST STEP TOWARDS HELP</span>
         <h1 id="page-title">A little closer to <em>help.</em></h1>
-        <p>When something feels wrong, you can ask for help.</p>
       </section>
 
       <section class="help-card" aria-labelledby="request-title">
-        <div class="card-top">
-          <span class="eyebrow">YOUR HELP REQUEST</span>
-        </div>
-        <h2 id="request-title">Need help?</h2>
-        <p>You can reach out, even if you’re not sure.</p>
+        <h2 id="request-title" class="visually-hidden">Your help request</h2>
 
         <div
           id="wristband-notice"
@@ -62,13 +62,19 @@
           <p id="wristband-notice-text"></p>
         </div>
 
-        <button id="request-button" class="primary" type="button">
-          <span id="request-button-label">Ask for help</span>
-          <span aria-hidden="true">↗</span>
+        <button id="request-button" class="btn btn-help" type="button">
+          <span class="help-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="30" height="30">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4" />
+              <circle cx="12" cy="12" r="3.6" fill="none" stroke="currentColor" stroke-width="2.4" />
+              <path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9" stroke="currentColor" stroke-width="2.4" />
+            </svg>
+          </span>
+          <span id="request-button-label" class="help-label">Ask for help</span>
         </button>
         <button
           id="cancel-button"
-          class="secondary"
+          class="btn btn-outline btn-block cancel-button"
           type="button"
           hidden
         >
@@ -77,15 +83,17 @@
 
         <div
           id="request-status"
-          class="status-banner"
+          class="status-banner request-status"
+          data-status="idle"
           role="status"
           aria-live="polite"
           aria-atomic="true"
         >
-          <strong id="status-title">No active request</strong>
-          <p id="status-description">
-            You haven’t asked for help yet.
-          </p>
+          <span class="status-dot" aria-hidden="true"></span>
+          <div>
+            <strong id="status-title">No active request</strong>
+            <p id="status-description">Tap the button when you need someone.</p>
+          </div>
         </div>
 
         <figure
@@ -129,25 +137,23 @@
             <circle class="map-you" cx="172" cy="90" r="9" />
           </svg>
           <figcaption id="map-caption">
-            Illustration only. Not your real location.
+            Illustration, not your real location.
           </figcaption>
         </figure>
 
         <p class="demo-note">
-          Your request goes to signed-in Linked volunteers. Positions are
-          hypothetical in this demo. In an emergency, call
-          <a href="tel:112">112</a>.
+          <span>Demo · Emergency?</span>
+          <a class="call-chip" href="tel:112">Call 112</a>
         </p>
         <noscript>
           <p class="script-warning">
-            Enable JavaScript to use the help button.
-            Without JavaScript, no request will be started.
+            Turn on JavaScript to use the help button.
           </p>
         </noscript>
       </section>
 
-      <nav aria-label="Other views">
-        <a class="sound-toggle" href="volunteer.html">Open volunteer inbox</a>
+      <nav class="page-nav" aria-label="Other views">
+        <a class="btn btn-ghost btn-sm" href="volunteer.html">Volunteer inbox →</a>
       </nav>
     </main>
 

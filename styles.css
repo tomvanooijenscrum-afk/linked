@@ -1,265 +1,197 @@
-:root {
-  --green: #183e37;
-  --muted: #586354;
-  --paper: #f8f9f5;
-  --border: #e1e5da;
-}
+/* Hulppagina (index.html). Kleuren en knoppen komen uit theme.css. */
 
-* {
-  box-sizing: border-box;
-}
-
-body {
+.intro h1 {
   margin: 0;
-  background: var(--paper);
-  color: var(--green);
-  font-family: "DM Sans", "Segoe UI", sans-serif;
-  font-size: 16px;
 }
 
-button {
-  font: inherit;
-  cursor: pointer;
-}
-
-button:disabled {
-  cursor: not-allowed;
-}
-
-button:focus-visible,
-a:focus-visible {
-  outline: 3px solid #769a40;
-  outline-offset: 4px;
-}
-
-header {
-  max-width: 1120px;
-  min-height: 88px;
-  margin: auto;
-  padding: 16px 32px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-family: "Manrope", "Segoe UI", sans-serif;
-  font-size: 35px;
-  font-weight: 800;
-  letter-spacing: -2px;
-}
-
-.brand b {
-  width: 34px;
-  border: 2px solid var(--green);
-  border-radius: 11px;
-  font-size: 29px;
-  line-height: 31px;
-  text-align: center;
-  transform: rotate(-12deg);
-  letter-spacing: 0;
-}
-
-.brand span {
-  color: #8aab54;
-  margin-left: -9px;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.sound-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 10px;
-  background: white;
-  color: var(--green);
-  font-size: 12px;
-}
-
-.sound-toggle:hover {
-  background: #edf2e5;
-}
-
-.sound-toggle[aria-pressed="false"] {
-  color: var(--muted);
-  text-decoration: line-through;
-}
-
-.demo-label {
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 12px;
-}
-
-.demo-label {
-  border: 1px solid var(--border);
-}
-
-main {
-  max-width: 760px;
-  margin: auto;
-  padding: 40px 32px;
-}
-
-.intro {
-  max-width: 720px;
-  margin-bottom: 32px;
-}
-
-.eyebrow {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-}
-
-h1 {
-  margin: 16px 0;
-  font-family: "Manrope", "Segoe UI", sans-serif;
-  font-size: clamp(32px, 5vw, 58px);
-  line-height: 1.12;
-  font-weight: 500;
-  letter-spacing: -2px;
-}
-
-h1 em {
-  font-family: Georgia, serif;
-  font-weight: 400;
-}
-
-p {
-  color: var(--muted);
-  line-height: 1.65;
-}
+/* ---- Donkere hulpkaart ---- */
 
 .help-card {
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 28px;
-  background: white;
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  background: var(--night);
+  color: var(--on-night);
+  box-shadow: 0 18px 40px rgba(29, 24, 56, 0.25);
 }
 
-.card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+.help-card p {
+  color: var(--on-night-muted);
 }
 
-h2 {
-  margin: 20px 0 10px;
-  font-size: 26px;
-  font-weight: 500;
-  letter-spacing: -0.5px;
+.help-card :focus-visible {
+  outline-color: var(--lime);
 }
 
-.help-card > p {
-  margin-top: 0;
-}
+/* ---- De hulpknop: groot, koraal, niet te missen ---- */
 
-.primary,
-.secondary {
-  width: 100%;
-  min-height: 56px;
-  border-radius: 10px;
-  padding: 16px 20px;
-  margin: 12px 0 0;
-  font-weight: 600;
-}
-
-.primary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.btn-help {
+  justify-content: flex-start;
   gap: 16px;
-  background: var(--green);
-  color: white;
-  border: 1px solid var(--green);
+  width: 100%;
+  min-height: 96px;
+  border-radius: 24px;
+  padding: 18px 22px;
+  background: var(--help);
+  color: #fff;
+  font-size: clamp(22px, 6.5vw, 28px);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  box-shadow:
+    0 10px 30px var(--help-glow),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.15);
+  animation: help-glow 2.4s ease-in-out infinite;
 }
 
-.primary:hover {
-  background: #29584c;
+.btn-help:hover:not(:disabled) {
+  background: var(--help-hover);
 }
 
-.secondary {
-  background: white;
-  color: var(--green);
-  border: 1px solid #9cae91;
+.btn-help:active:not(:disabled) {
+  transform: scale(0.97);
+  box-shadow: 0 4px 14px var(--help-glow);
 }
 
-.secondary:hover {
-  background: #edf2e5;
+.help-icon {
+  display: grid;
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
 }
+
+.help-label {
+  white-space: normal;
+  text-align: left;
+}
+
+@keyframes help-glow {
+  50% {
+    box-shadow:
+      0 10px 44px 6px var(--help-glow),
+      inset 0 -4px 0 rgba(0, 0, 0, 0.15);
+  }
+}
+
+.cancel-button {
+  min-height: 56px;
+  margin-top: 4px;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: var(--on-night);
+}
+
+.cancel-button:hover:not(:disabled) {
+  border-color: var(--lime);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ---- Status: een chip met een gekleurde stip per toestand ---- */
 
 .status-banner {
-  margin-top: 20px;
-  padding: 16px;
-  border-radius: 10px;
-  background: #edf2e5;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 16px;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  background: var(--night-2);
 }
 
 .status-banner strong {
   display: block;
+  color: var(--on-night);
 }
 
 .status-banner p {
-  margin: 8px 0 0;
+  margin: 2px 0 0;
   font-size: 14px;
+  line-height: 1.45;
+}
+
+.status-dot {
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--on-night-muted);
+}
+
+[data-status="sending"] .status-dot {
+  background: #a993ff;
+  animation: dot-pulse 1s ease-in-out infinite;
+}
+
+[data-status="received"] .status-dot {
+  background: #a993ff;
+}
+
+[data-status="accepted"] .status-dot {
+  background: var(--lime);
+  box-shadow: 0 0 0 4px rgba(198, 244, 50, 0.25);
+}
+
+.request-status[data-status="accepted"] {
+  background: var(--night-3);
+}
+
+[data-status="failed"] .status-dot,
+[data-status="cancelFailed"] .status-dot {
+  border-radius: 3px;
+  background: #ff8a8e;
+}
+
+@keyframes dot-pulse {
+  50% {
+    opacity: 0.35;
+  }
 }
 
 /* Melding na het aantikken van een polsbandje (wristband-tap.js). */
 .wristband-notice {
-  margin: 16px 0 0;
-  border-left: 4px solid #8aab54;
+  display: block;
+  margin: 0 0 14px;
+  border-left: 4px solid var(--lime);
 }
 
 .wristband-notice[data-state="inactive"],
 .wristband-notice[data-state="unknown"],
 .wristband-notice[data-state="offline"] {
-  border-left-color: #9cae91;
-  background: #f1f3ee;
+  border-left-color: var(--on-night-muted);
 }
 
+/* ---- Kaartje (illustratie) ---- */
+
 .request-map {
-  margin: 20px 0 0;
+  margin: 16px 0 0;
 }
 
 .request-map svg {
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 10px;
-  background: #eef2e8;
+  border-radius: var(--radius);
+  background: var(--night-2);
 }
 
 .request-map figcaption {
-  margin-top: 8px;
-  color: var(--muted);
+  margin-top: 6px;
+  color: var(--on-night-muted);
   font-size: 12px;
 }
 
 .map-blocks rect {
-  fill: white;
+  fill: var(--night-3);
 }
 
 .map-park {
-  fill: #dbe6cc;
+  fill: #34502a;
 }
 
 .map-links line {
-  stroke: var(--green);
+  stroke: #a993ff;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-dasharray: 4 6;
@@ -268,23 +200,23 @@ h2 {
 }
 
 .map-helpers circle {
-  fill: #c3cdb8;
-  stroke: white;
+  fill: #6b6396;
+  stroke: var(--night);
   stroke-width: 3;
   transition: fill 0.4s;
 }
 
 .map-pulses circle {
-  fill: #8aab54;
+  fill: var(--help);
   opacity: 0;
   transform-box: fill-box;
   transform-origin: center;
 }
 
 .map-you {
-  fill: var(--green);
-  stroke: white;
-  stroke-width: 4;
+  fill: var(--help);
+  stroke: #fff;
+  stroke-width: 3;
   transition: fill 0.4s;
 }
 
@@ -297,25 +229,25 @@ h2 {
 }
 
 [data-status="sent"] .map-links line {
-  opacity: 0.6;
+  opacity: 0.7;
   animation: map-flow 0.8s linear infinite;
 }
 
 [data-status="received"] .map-links line {
   opacity: 1;
-  stroke: #769a40;
+  stroke: var(--lime);
   stroke-dasharray: none;
 }
 
 [data-status="received"] .map-helpers circle {
-  fill: #769a40;
+  fill: var(--lime);
   transform-box: fill-box;
   transform-origin: center;
   animation: map-pop 0.4s ease-out;
 }
 
 [data-status="cancelled"] .map-you {
-  fill: #9aa596;
+  fill: #6b6396;
 }
 
 @keyframes map-pulse {
@@ -342,27 +274,62 @@ h2 {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .request-map * {
-    animation: none !important;
-    transition: none !important;
-  }
-
-  [data-status="sent"] .map-pulses circle:first-child {
-    opacity: 0.3;
-    transform: scale(2.5);
-  }
-}
+/* ---- Onderkant kaart: één regel, 112 als belknop ---- */
 
 .help-card .demo-note {
-  margin: 20px 0 0;
-  padding-top: 18px;
-  border-top: 1px solid var(--border);
-  font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-top: 16px;
+  border-top-color: rgba(255, 255, 255, 0.12);
+  color: var(--on-night-muted);
 }
 
-.demo-note a {
-  color: var(--green);
+.call-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  border-radius: 999px;
+  padding: 0 16px;
+  background: var(--lime);
+  color: #1d1838;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.call-chip:hover {
+  background: #d6ff5c;
+}
+
+.script-warning {
+  margin: 12px 0 0;
+  color: #ffb3b5;
+}
+
+.page-nav {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+/* ---- Geluidsknop in de kop ---- */
+
+.sound-toggle .sound-off {
+  display: none;
+}
+
+.sound-toggle[aria-pressed="false"] {
+  color: var(--on-night-muted);
+}
+
+.sound-toggle[aria-pressed="false"] .sound-waves {
+  display: none;
+}
+
+.sound-toggle[aria-pressed="false"] .sound-off {
+  display: inline;
 }
 
 /* Confetti bij een geaccepteerde aanvraag (confetti.js). */
@@ -380,48 +347,40 @@ h2 {
   will-change: transform, opacity;
 }
 
-[hidden] {
-  display: none !important;
+@media (prefers-reduced-motion: reduce) {
+  .btn-help,
+  .request-map *,
+  .status-dot {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  [data-status="sent"] .map-pulses circle:first-child {
+    opacity: 0.3;
+    transform: scale(2.5);
+  }
 }
 
-@media (max-width: 760px) {
-  header {
-    min-height: 64px;
-    padding: 12px 20px;
-  }
-
-  .brand {
-    font-size: 28px;
-  }
-
-  .brand b {
-    display: none;
-  }
-
-  .demo-label,
-  .sound-toggle {
-    font-size: 11px;
-  }
-
-  main {
-    padding: 24px 20px;
-  }
-
-  .intro {
-    margin-bottom: 24px;
-  }
-
-  h1 {
-    letter-spacing: -1px;
-  }
-
-  .intro p {
-    font-size: 14px;
-    margin-bottom: 0;
-  }
-
+@media (min-width: 761px) {
   .help-card {
-    padding: 22px;
+    padding: 28px;
+  }
+}
+
+@media (max-width: 360px) {
+  .help-card {
+    padding: 16px;
   }
 
+  .btn-help {
+    gap: 12px;
+    min-height: 84px;
+    padding: 14px 16px;
+  }
+
+  .help-icon {
+    flex-basis: 46px;
+    width: 46px;
+    height: 46px;
+  }
 }

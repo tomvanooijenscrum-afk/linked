@@ -391,7 +391,8 @@ geen gebruikerstest op een echte telefoon.
 ## Code lezen
 
 - `index.html`: één gebruikersscherm met vaste knoppen en statusvelden.
-- `styles.css`: de bestaande groene stijl, kaarten en mobiele indeling.
+- `theme.css`: kleuren (licht met donkere accenten, volgt de donkere modus van de telefoon), kop en knoppen (variant + maat) voor alle pagina's.
+- `styles.css`: de hulppagina: grote hulpknop, statuschip, kaartje en 112-knop.
 - `app.js`: aanvraag maken, status volgen (elke 3 s) en annuleren via de API.
 - `volunteer.js`: inloggen, gedeelde lijst ophalen, melden, accepteren.
 - `request-store.js`: wat dit apparaat onthoudt (eigen aanvraag, beschikbaarheid).

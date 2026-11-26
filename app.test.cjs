@@ -28,6 +28,7 @@ function setup({ server = createFakeServer(), storage = createStorage(), token =
     "#request-button",
     "#request-button-label",
     "#cancel-button",
+    "#request-status",
     "#status-title",
     "#status-description",
     "#request-map",
@@ -141,6 +142,7 @@ const posts = (server) =>
   assert.equal(app.elements.get("#request-button").hidden, true);
   assert.equal(app.elements.get("#cancel-button").hidden, false);
   assert.equal(app.mapStatus(), "received");
+  assert.equal(app.elements.get("#request-status").dataset.status, "received");
   const saved = app.store.getRequest();
   assert.equal(saved.id, "req-1");
   assert.equal(saved.secret, "secret-req-1");
@@ -159,6 +161,7 @@ const posts = (server) =>
   app.server.state.requests[0].acceptedAt = "2026-11-26T21:00:00+00:00";
   await app.runPoll();
   assert.equal(app.title(), "A volunteer is on the way");
+  assert.equal(app.elements.get("#request-status").dataset.status, "accepted");
   assert.equal(app.confetti.length, 1, "Confetti bij acceptatie");
   assert.equal(app.confetti[0], app.elements.get("#status-title"), "Vanuit de statusmelding");
   assert.equal(app.timers.size, 0, "Na acceptatie niet meer vragen");
